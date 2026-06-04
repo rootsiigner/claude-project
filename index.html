@@ -1,973 +1,1044 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fiche Météo Weekly — Tech Lead SKILL CENTER</title>
-  <style>
-    :root {
-      --orange: #FF6B00;
-      --orange-light: #FFF3E6;
-      --orange-dark: #CC5500;
-      --dark: #1A1A2E;
-      --gray: #6B7280;
-      --gray-light: #F3F4F6;
-      --border: #E5E7EB;
-      --white: #FFFFFF;
-      --success: #10B981;
-      --danger: #EF4444;
-      --warning: #F59E0B;
-      --blue: #3B82F6;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiche Météo Weekly – Orange Business Sénégal SKILL CENTER</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --orange: #FF6B00;
+    --orange-dark: #cc5500;
+    --orange-light: #fff3eb;
+    --bg: #f5f5f5;
+    --card: #ffffff;
+    --text: #222;
+    --muted: #777;
+    --border: #e0e0e0;
+    --radius: 10px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  #nav { background: var(--orange); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+  #nav .brand { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+  #nav-actions { display: flex; align-items: center; gap: 12px; }
+  #nav-user { font-size: 0.85rem; opacity: .9; }
+  .btn-nav { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: background .2s; }
+  .btn-nav:hover { background: rgba(255,255,255,0.35); }
 
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #F0F2F5;
-      color: var(--dark);
-      min-height: 100vh;
-    }
+  .page { display: none; padding: 24px; max-width: 1100px; margin: 0 auto; }
+  .page.active { display: block; }
 
-    /* Header */
-    header {
-      background: var(--dark);
-      color: white;
-      padding: 0 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 64px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,.3);
-    }
-    .logo { display: flex; align-items: center; gap: 12px; }
-    .logo-badge {
-      background: var(--orange);
-      color: white;
-      font-weight: 800;
-      font-size: 13px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      letter-spacing: 1px;
-    }
-    .logo-text { font-size: 15px; font-weight: 600; opacity: .9; }
-    .header-actions { display: flex; gap: 10px; }
+  #page-login { display: none; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, var(--orange) 0%, #ff9a44 100%); max-width: none; }
+  #page-login.active { display: flex; }
+  .login-card { background: #fff; border-radius: 16px; padding: 40px; width: 100%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+  .login-logo { text-align: center; margin-bottom: 24px; }
+  .login-logo .logo-icon { font-size: 3rem; }
+  .login-logo h1 { font-size: 1.3rem; color: var(--orange); font-weight: 700; margin-top: 8px; }
+  .login-logo p { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
 
-    /* Layout */
-    .container { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 0.95rem; transition: border-color .2s; font-family: inherit;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--orange); }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: all .2s; }
+  .btn-primary { background: var(--orange); color: #fff; width: 100%; }
+  .btn-primary:hover { background: var(--orange-dark); }
+  .btn-secondary { background: var(--border); color: var(--text); }
+  .btn-secondary:hover { background: #ccc; }
+  .btn-danger { background: #e53935; color: #fff; }
+  .btn-danger:hover { background: #b71c1c; }
+  .btn-sm { padding: 6px 14px; font-size: 0.82rem; }
+  .btn-outline { background: transparent; border: 2px solid var(--orange); color: var(--orange); }
+  .btn-outline:hover { background: var(--orange-light); }
 
-    /* Step Nav */
-    .steps {
-      display: flex;
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 1px 4px rgba(0,0,0,.1);
-      margin-bottom: 28px;
-    }
-    .step-btn {
-      flex: 1;
-      padding: 14px 8px;
-      border: none;
-      background: white;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--gray);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      border-right: 1px solid var(--border);
-      transition: all .2s;
-    }
-    .step-btn:last-child { border-right: none; }
-    .step-btn.active { background: var(--orange-light); color: var(--orange); }
-    .step-btn.done { color: var(--success); }
-    .step-num {
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 700;
-      background: var(--gray-light);
-      color: var(--gray);
-    }
-    .step-btn.active .step-num { background: var(--orange); color: white; }
-    .step-btn.done .step-num { background: var(--success); color: white; }
-    .step-label { font-size: 11px; text-align: center; line-height: 1.3; }
+  .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
+  .card-month { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; cursor: pointer; border: 2px solid transparent; transition: all .2s; text-align: center; }
+  .card-month:hover { border-color: var(--orange); transform: translateY(-2px); }
+  .card-month .month-label { font-size: 1.1rem; font-weight: 700; }
+  .card-month .month-count { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+  .card-month .month-icon { font-size: 2rem; margin-bottom: 8px; }
+  .card-week { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 20px; cursor: pointer; border-left: 4px solid var(--orange); transition: all .2s; display: flex; align-items: center; justify-content: space-between; }
+  .card-week:hover { transform: translateX(4px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+  .meteo-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
+  .meteo-excellent { background: #e8f5e9; color: #2e7d32; }
+  .meteo-correct { background: #e3f2fd; color: #1565c0; }
+  .meteo-difficile { background: #fff8e1; color: #f57f17; }
+  .meteo-critique { background: #ffebee; color: #c62828; }
 
-    /* Cards */
-    .card {
-      background: white;
-      border-radius: 14px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.08);
-      margin-bottom: 20px;
-      overflow: hidden;
-    }
-    .card-header {
-      background: var(--orange);
-      color: white;
-      padding: 16px 24px;
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: .5px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .card-body { padding: 24px; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .page-header h2 { font-size: 1.4rem; font-weight: 700; }
+  .breadcrumb { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; }
+  .breadcrumb a { color: var(--orange); text-decoration: none; cursor: pointer; }
+  .breadcrumb a:hover { text-decoration: underline; }
 
-    /* Météo Selector */
-    .meteo-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-top: 8px;
-    }
-    .meteo-option {
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 8px;
-      text-align: center;
-      cursor: pointer;
-      transition: all .2s;
-      position: relative;
-    }
-    .meteo-option input { position: absolute; opacity: 0; }
-    .meteo-option:hover { border-color: var(--orange); background: var(--orange-light); }
-    .meteo-option.selected { border-color: var(--orange); background: var(--orange-light); }
-    .meteo-emoji { font-size: 32px; display: block; margin-bottom: 8px; }
-    .meteo-label { font-size: 13px; font-weight: 700; }
-    .meteo-option.selected .meteo-label { color: var(--orange); }
+  .step-indicator { display: flex; gap: 4px; margin-bottom: 24px; }
+  .step-dot { flex: 1; height: 4px; background: var(--border); border-radius: 2px; transition: background .3s; }
+  .step-dot.active { background: var(--orange); }
+  .step-dot.done { background: #4caf50; }
+  .step-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+  .step-subtitle { font-size: 0.85rem; color: var(--muted); margin-bottom: 20px; }
+  .step-actions { display: flex; gap: 12px; margin-top: 24px; }
+  .step-actions .btn { flex: 1; }
 
-    /* Form Fields */
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    label { font-size: 12px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: .5px; }
-    input[type="text"], input[type="date"], select, textarea {
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 14px;
-      color: var(--dark);
-      outline: none;
-      transition: border-color .2s;
-      font-family: inherit;
-      width: 100%;
-    }
-    input:focus, select:focus, textarea:focus { border-color: var(--orange); }
+  .meteo-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 8px; }
+  .meteo-option { border: 2px solid var(--border); border-radius: 10px; padding: 16px; cursor: pointer; text-align: center; transition: all .2s; }
+  .meteo-option:hover { border-color: var(--orange); }
+  .meteo-option.selected { border-color: var(--orange); background: var(--orange-light); }
+  .meteo-option .meteo-emoji { font-size: 2rem; }
+  .meteo-option .meteo-name { font-weight: 600; font-size: 0.9rem; margin-top: 6px; }
+  .meteo-option .meteo-desc { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
 
-    /* Tables */
-    .table-wrapper { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    thead th {
-      background: var(--dark);
-      color: white;
-      padding: 10px 8px;
-      text-align: left;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: .5px;
-      white-space: nowrap;
-    }
-    tbody tr { border-bottom: 1px solid var(--border); }
-    tbody tr:hover { background: var(--gray-light); }
-    tbody td { padding: 6px 4px; }
-    tbody td input, tbody td select {
-      border: none;
-      background: transparent;
-      padding: 4px 6px;
-      font-size: 13px;
-      width: 100%;
-      outline: none;
-      border-radius: 4px;
-    }
-    tbody td input:focus, tbody td select:focus {
-      background: var(--orange-light);
-      border: 1px solid var(--orange);
-    }
-    .td-num { color: var(--gray); font-weight: 600; text-align: center; width: 28px; }
+  .dyn-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .dyn-item { display: grid; gap: 8px; background: #fafafa; border: 1px solid var(--border); border-radius: 8px; padding: 12px; position: relative; }
+  .dyn-item .remove-btn { position: absolute; top: 8px; right: 8px; background: none; border: none; color: #e53935; cursor: pointer; font-size: 1rem; padding: 2px 6px; border-radius: 4px; }
+  .dyn-item .remove-btn:hover { background: #ffebee; }
+  .add-item-btn { display: flex; align-items: center; gap: 6px; background: none; border: 2px dashed var(--border); border-radius: 8px; padding: 10px; width: 100%; cursor: pointer; color: var(--muted); font-size: 0.9rem; transition: all .2s; margin-top: 8px; }
+  .add-item-btn:hover { border-color: var(--orange); color: var(--orange); }
 
-    /* Progress bar */
-    .progress-cell { min-width: 100px; }
-    .progress-wrap { display: flex; align-items: center; gap: 6px; }
-    .progress-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-    .progress-fill { height: 100%; background: var(--orange); border-radius: 3px; transition: width .3s; }
-    .progress-pct { font-size: 11px; font-weight: 700; color: var(--gray); min-width: 30px; }
+  .status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; }
+  .status-en-cours { background: #e3f2fd; color: #1565c0; }
+  .status-solde { background: #e8f5e9; color: #2e7d32; }
+  .status-bloque { background: #ffebee; color: #c62828; }
 
-    /* Add row btn */
-    .add-row-btn {
-      background: none;
-      border: 1.5px dashed var(--orange);
-      color: var(--orange);
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      margin-top: 10px;
-      transition: all .2s;
-    }
-    .add-row-btn:hover { background: var(--orange-light); }
+  .fiche-section { margin-bottom: 20px; }
+  .fiche-section h4 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .fiche-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .fiche-table th { background: #fafafa; padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+  .fiche-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .fiche-table tr:last-child td { border-bottom: none; }
 
-    /* Delete row */
-    .del-btn {
-      background: none;
-      border: none;
-      color: #ccc;
-      cursor: pointer;
-      font-size: 16px;
-      padding: 2px 4px;
-      border-radius: 4px;
-      transition: color .2s;
-    }
-    .del-btn:hover { color: var(--danger); }
+  .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 20px; margin-top: 20px; }
+  .chart-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
+  .chart-card h4 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
+  .chart-card canvas { max-height: 300px; }
 
-    /* Buttons */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 20px;
-      border-radius: 8px;
-      border: none;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .2s;
-    }
-    .btn-primary { background: var(--orange); color: white; }
-    .btn-primary:hover { background: var(--orange-dark); }
-    .btn-secondary { background: var(--gray-light); color: var(--dark); }
-    .btn-secondary:hover { background: var(--border); }
-    .btn-outline { background: white; color: var(--orange); border: 1.5px solid var(--orange); }
-    .btn-outline:hover { background: var(--orange-light); }
-    .btn-success { background: var(--success); color: white; }
-    .btn-sm { padding: 7px 14px; font-size: 13px; }
+  .tl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-top: 16px; }
+  .tl-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; cursor: pointer; border: 2px solid transparent; transition: all .2s; }
+  .tl-card:hover { border-color: var(--orange); transform: translateY(-2px); }
+  .tl-card .tl-avatar { width: 48px; height: 48px; background: var(--orange); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; }
+  .tl-card .tl-name { font-weight: 700; }
+  .tl-card .tl-domain { font-size: 0.85rem; color: var(--muted); }
+  .tl-card .tl-count { font-size: 0.82rem; margin-top: 8px; color: var(--orange); }
 
-    /* Navigation */
-    .nav-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 24px;
-    }
+  .tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+  .tab { padding: 10px 20px; cursor: pointer; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .2s; }
+  .tab.active { color: var(--orange); border-bottom-color: var(--orange); }
+  .tab:hover:not(.active) { color: var(--text); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
 
-    /* Step panels */
-    .step-panel { display: none; }
-    .step-panel.active { display: block; }
+  .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem; }
+  .alert-error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+  .alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+  .alert-info { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
 
-    /* Summary */
-    .summary-section { margin-bottom: 24px; }
-    .summary-kv { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
-    .kv-item { background: var(--gray-light); border-radius: 8px; padding: 8px 14px; }
-    .kv-label { font-size: 11px; color: var(--gray); font-weight: 600; }
-    .kv-value { font-size: 14px; font-weight: 700; margin-top: 2px; }
-    .meteo-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 8px 18px; border-radius: 30px; font-weight: 700; font-size: 15px;
-    }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Print */
-    @media print {
-      header, .steps, .nav-row, .add-row-btn, .del-btn, .header-actions, #printHint { display: none !important; }
-      body { background: white; }
-      .container { padding: 0; max-width: 100%; }
-      .step-panel { display: block !important; }
-      .card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; margin-bottom: 14px; }
-    }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state p { margin-bottom: 16px; }
 
-    /* Responsive */
-    @media (max-width: 700px) {
-      .form-row { grid-template-columns: 1fr; }
-      .form-row.three { grid-template-columns: 1fr 1fr; }
-      .meteo-grid { grid-template-columns: 1fr 1fr; }
-      .step-label { display: none; }
-    }
+  @media print {
+    #nav, .no-print { display: none !important; }
+    .page { padding: 0; }
+    body { background: #fff; }
+  }
 
-    /* Toast */
-    #toast {
-      position: fixed; bottom: 24px; right: 24px;
-      background: var(--dark); color: white;
-      padding: 12px 20px; border-radius: 10px;
-      font-size: 14px; font-weight: 600;
-      transform: translateY(60px); opacity: 0;
-      transition: all .3s; z-index: 999;
-    }
-    #toast.show { transform: translateY(0); opacity: 1; }
-    #toast.success { background: var(--success); }
-  </style>
+  @media (max-width: 600px) {
+    .meteo-options { grid-template-columns: 1fr 1fr; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .page { padding: 16px; }
+  }
+
+  .weeks-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .loading { text-align: center; padding: 40px; color: var(--muted); }
+  .inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag { display: inline-block; background: var(--orange-light); color: var(--orange); padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; margin: 2px; }
+  .user-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
+  .user-row:last-child { border-bottom: none; }
+  .user-info .user-name { font-weight: 600; }
+  .user-info .user-email { font-size: 0.82rem; color: var(--muted); }
+  .role-badge { padding: 2px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; }
+  .role-manager { background: #fff3eb; color: var(--orange); }
+  .role-techLead { background: #e3f2fd; color: #1565c0; }
+  .summary-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; text-align: center; }
+  .stat-card .stat-value { font-size: 2rem; font-weight: 700; color: var(--orange); }
+  .stat-card .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+</style>
 </head>
 <body>
 
-<header>
-  <div class="logo">
-    <span class="logo-badge">OBS</span>
-    <span class="logo-text">SKILL CENTER — Fiche Météo Weekly</span>
+<nav id="nav" style="display:none">
+  <div class="brand"><span>☀️</span> Fiche Météo Weekly</div>
+  <div id="nav-actions">
+    <span id="nav-user"></span>
+    <button class="btn-nav" id="nav-manager-btn" style="display:none" onclick="navigate('manager')">📊 Manager</button>
+    <button class="btn-nav" id="nav-admin-btn" style="display:none" onclick="navigate('admin')">👥 Admin</button>
+    <button class="btn-nav" onclick="navigate('home')">🏠 Accueil</button>
+    <button class="btn-nav" onclick="doSignOut()">Déconnexion</button>
   </div>
-  <div class="header-actions">
-    <button class="btn btn-outline btn-sm" onclick="saveData()">&#128190; Sauvegarder</button>
-    <button class="btn btn-primary btn-sm" onclick="window.print()">&#128438; Imprimer / PDF</button>
+</nav>
+
+<div id="page-login" class="page active">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">☀️</div>
+      <h1>Fiche Météo Weekly</h1>
+      <p>Orange Business Sénégal · SKILL CENTER</p>
+    </div>
+    <div id="login-alert"></div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="votre@email.com">
+    </div>
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <input type="password" id="login-password" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">Se connecter</button>
+    <p style="text-align:center;margin-top:16px;font-size:0.85rem;color:var(--muted)">
+      Mot de passe oublié ? <a href="#" onclick="doResetPwd()" style="color:var(--orange)">Réinitialiser</a>
+    </p>
   </div>
-</header>
-
-<div class="container">
-
-  <!-- Step navigation -->
-  <div class="steps">
-    <button class="step-btn active" onclick="goTo(0)" id="nav0">
-      <span class="step-num">1</span>
-      <span class="step-label">Informations<br>Générales</span>
-    </button>
-    <button class="step-btn" onclick="goTo(1)" id="nav1">
-      <span class="step-num">2</span>
-      <span class="step-label">Suivi<br>Projets</span>
-    </button>
-    <button class="step-btn" onclick="goTo(2)" id="nav2">
-      <span class="step-num">3</span>
-      <span class="step-label">Suivi<br>Supports</span>
-    </button>
-    <button class="step-btn" onclick="goTo(3)" id="nav3">
-      <span class="step-num">4</span>
-      <span class="step-label">Blocages &amp;<br>Livraisons</span>
-    </button>
-    <button class="step-btn" onclick="goTo(4)" id="nav4">
-      <span class="step-num">5</span>
-      <span class="step-label">Plan<br>d'Actions</span>
-    </button>
-    <button class="step-btn" onclick="goTo(5)" id="nav5">
-      <span class="step-num">&#10003;</span>
-      <span class="step-label">Aperçu &amp;<br>Export</span>
-    </button>
-  </div>
-
-  <!-- STEP 1: Informations Générales -->
-  <div class="step-panel active" id="panel0">
-    <div class="card">
-      <div class="card-header">&#9728; Informations Générales</div>
-      <div class="card-body">
-        <div class="form-row three">
-          <div class="form-group">
-            <label>Tech Lead</label>
-            <input type="text" id="techLead" placeholder="Prénom NOM" />
-          </div>
-          <div class="form-group">
-            <label>Semaine</label>
-            <input type="text" id="semaine" placeholder="S__ — du JJ/MM au JJ/MM/2026" />
-          </div>
-          <div class="form-group">
-            <label>Domaine</label>
-            <select id="domaine">
-              <option value="">Sélectionner…</option>
-              <option>Réseau</option>
-              <option>Collaboration</option>
-              <option>IT</option>
-              <option>Sécurité</option>
-              <option>Cloud</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom:20px;">
-          <label>Date de soumission</label>
-          <input type="date" id="dateSubmit" style="max-width:220px;" />
-        </div>
-        <div class="form-group">
-          <label>Météo de la semaine</label>
-          <div class="meteo-grid" id="meteoGrid">
-            <label class="meteo-option" data-val="Excellent">
-              <input type="radio" name="meteo" value="Excellent" />
-              <span class="meteo-emoji">&#9728;&#65039;</span>
-              <span class="meteo-label">Excellent</span>
-            </label>
-            <label class="meteo-option" data-val="Correct">
-              <input type="radio" name="meteo" value="Correct" />
-              <span class="meteo-emoji">&#9925;</span>
-              <span class="meteo-label">Correct</span>
-            </label>
-            <label class="meteo-option" data-val="Difficile">
-              <input type="radio" name="meteo" value="Difficile" />
-              <span class="meteo-emoji">&#127783;&#65039;</span>
-              <span class="meteo-label">Difficile</span>
-            </label>
-            <label class="meteo-option" data-val="Critique">
-              <input type="radio" name="meteo" value="Critique" />
-              <span class="meteo-emoji">&#9928;&#65039;</span>
-              <span class="meteo-label">Critique</span>
-            </label>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="nav-row">
-      <span></span>
-      <button class="btn btn-primary" onclick="goTo(1)">Suivant &#8594;</button>
-    </div>
-  </div>
-
-  <!-- STEP 2: Suivi des Projets -->
-  <div class="step-panel" id="panel1">
-    <div class="card">
-      <div class="card-header">&#128203; Suivi des Projets en Charge</div>
-      <div class="card-body">
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Réf. Projet</th>
-                <th>Client</th>
-                <th>Domaine</th>
-                <th>Statut</th>
-                <th>Avancement</th>
-                <th>Blocage ?</th>
-                <th>Action Réalisée</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="projetsTbody"></tbody>
-          </table>
-        </div>
-        <button class="add-row-btn" onclick="addProjetRow()">+ Ajouter une ligne</button>
-        <p style="font-size:11px;color:var(--gray);margin-top:10px;">
-          Statuts : <strong>EN COURS</strong> | <strong>SOLDÉ</strong> | <strong>BLOQUÉ</strong> &nbsp;·&nbsp; Avancement : % d'exécution technique estimé
-        </p>
-      </div>
-    </div>
-    <div class="nav-row">
-      <button class="btn btn-secondary" onclick="goTo(0)">&#8592; Précédent</button>
-      <button class="btn btn-primary" onclick="goTo(2)">Suivant &#8594;</button>
-    </div>
-  </div>
-
-  <!-- STEP 3: Suivi des Supports -->
-  <div class="step-panel" id="panel2">
-    <div class="card">
-      <div class="card-header">&#128295; Suivi des Supports</div>
-      <div class="card-body">
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Client</th>
-                <th>Domaine</th>
-                <th>Statut</th>
-                <th>Avancement</th>
-                <th>Blocage ?</th>
-                <th>Action Réalisée</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="supportsTbody"></tbody>
-          </table>
-        </div>
-        <button class="add-row-btn" onclick="addSupportRow()">+ Ajouter une ligne</button>
-        <p style="font-size:11px;color:var(--gray);margin-top:10px;">
-          Statuts : <strong>EN COURS</strong> | <strong>SOLDÉ</strong> | <strong>BLOQUÉ</strong>
-        </p>
-      </div>
-    </div>
-    <div class="nav-row">
-      <button class="btn btn-secondary" onclick="goTo(1)">&#8592; Précédent</button>
-      <button class="btn btn-primary" onclick="goTo(3)">Suivant &#8594;</button>
-    </div>
-  </div>
-
-  <!-- STEP 4: Blocages & Livraisons -->
-  <div class="step-panel" id="panel3">
-    <div class="card">
-      <div class="card-header">&#128679; Blocages Identifiés</div>
-      <div class="card-body">
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Projet / Client</th>
-                <th>Type de Blocage</th>
-                <th>Action Demandée</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="blocagesTbody"></tbody>
-          </table>
-        </div>
-        <button class="add-row-btn" onclick="addBlocageRow()">+ Ajouter un blocage</button>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header">&#128230; Temps de Livraison — Projets Clôturés</div>
-      <div class="card-body">
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Projet / Client</th>
-                <th>Date Affectation</th>
-                <th>Date Livraison</th>
-                <th>Commentaire</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="livraisonsTbody"></tbody>
-          </table>
-        </div>
-        <button class="add-row-btn" onclick="addLivraisonRow()">+ Ajouter une livraison</button>
-      </div>
-    </div>
-    <div class="nav-row">
-      <button class="btn btn-secondary" onclick="goTo(2)">&#8592; Précédent</button>
-      <button class="btn btn-primary" onclick="goTo(4)">Suivant &#8594;</button>
-    </div>
-  </div>
-
-  <!-- STEP 5: Plan d'Actions -->
-  <div class="step-panel" id="panel4">
-    <div class="card">
-      <div class="card-header">&#127919; Plan d'Actions — NEXT WEEK</div>
-      <div class="card-body">
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>P.</th>
-                <th>Action à Réaliser</th>
-                <th>Projet / Client</th>
-                <th>Délai Cible</th>
-                <th>Support Requis</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="actionsTbody"></tbody>
-          </table>
-        </div>
-        <button class="add-row-btn" onclick="addActionRow()">+ Ajouter une action</button>
-      </div>
-    </div>
-    <div class="nav-row">
-      <button class="btn btn-secondary" onclick="goTo(3)">&#8592; Précédent</button>
-      <button class="btn btn-success" onclick="goTo(5)">&#10003; Voir l'aperçu</button>
-    </div>
-  </div>
-
-  <!-- STEP 6: Aperçu & Export -->
-  <div class="step-panel" id="panel5">
-    <div id="preview"></div>
-    <div class="nav-row" id="printHint">
-      <button class="btn btn-secondary" onclick="goTo(4)">&#8592; Modifier</button>
-      <div style="display:flex;gap:10px;">
-        <button class="btn btn-outline" onclick="saveData()">&#128190; Sauvegarder</button>
-        <button class="btn btn-primary" onclick="window.print()">&#128438; Imprimer / Exporter PDF</button>
-      </div>
-    </div>
-  </div>
-
 </div>
 
-<div id="toast"></div>
+<div id="page-home" class="page">
+  <div class="page-header">
+    <div>
+      <h2>📅 Mes Fiches Météo</h2>
+      <p style="color:var(--muted);font-size:.9rem">Organisées par mois</p>
+    </div>
+    <button class="btn btn-primary" style="width:auto" onclick="navigate('fiche-new')">+ Nouvelle Fiche</button>
+  </div>
+  <div id="home-content"><div class="loading">Chargement…</div></div>
+</div>
 
-<script>
-const STATUTS = ['EN COURS', 'SOLDÉ', 'BLOQUÉ'];
-const DOMAINES = ['IT', 'Réseau', 'Collaboration', 'Sécurité', 'Cloud'];
+<div id="page-month" class="page">
+  <div class="breadcrumb"><a onclick="navigate('home')">Accueil</a> › <span id="month-breadcrumb"></span></div>
+  <div class="page-header">
+    <h2 id="month-title"></h2>
+    <button class="btn btn-primary" style="width:auto" onclick="navigate('fiche-new')">+ Nouvelle Fiche</button>
+  </div>
+  <div id="month-content"><div class="loading">Chargement…</div></div>
+</div>
 
-function goTo(step) {
-  document.querySelectorAll('.step-panel').forEach((p, i) => p.classList.toggle('active', i === step));
-  document.querySelectorAll('.step-btn').forEach((b, i) => {
-    b.classList.remove('active', 'done');
-    if (i === step) b.classList.add('active');
-    else if (i < step) b.classList.add('done');
-  });
-  if (step === 5) renderPreview();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+<div id="page-fiche-form" class="page">
+  <div class="breadcrumb"><a onclick="navigate('home')">Accueil</a> › <span id="form-breadcrumb"></span></div>
+  <div class="page-header"><h2 id="form-title">Nouvelle Fiche Météo</h2></div>
+  <div class="step-indicator" id="step-indicator"></div>
+  <div id="form-alert"></div>
+  <div id="step-container"></div>
+</div>
+
+<div id="page-fiche-view" class="page">
+  <div class="breadcrumb"><a onclick="navigate('home')">Accueil</a> › <a id="view-month-link" style="color:var(--orange);cursor:pointer">Mois</a> › Fiche</div>
+  <div class="page-header">
+    <h2 id="view-title">Fiche Météo</h2>
+    <div class="inline-actions no-print">
+      <button class="btn btn-secondary btn-sm" id="view-edit-btn">✏️ Modifier</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Imprimer</button>
+    </div>
+  </div>
+  <div id="fiche-view-content"></div>
+</div>
+
+<div id="page-manager" class="page">
+  <div class="page-header"><h2>📊 Vue Manager – Toutes les Fiches</h2></div>
+  <div class="tabs">
+    <div class="tab active" onclick="showManagerTab('overview',this)">Vue d'ensemble</div>
+    <div class="tab" onclick="showManagerTab('tls',this)">Par Tech Lead</div>
+    <div class="tab" onclick="showManagerTab('charts',this)">Graphiques</div>
+    <div class="tab" onclick="showManagerTab('export',this)">Export</div>
+  </div>
+  <div id="tab-overview" class="tab-content active">
+    <div id="manager-stats"></div>
+    <div id="manager-recent"></div>
+  </div>
+  <div id="tab-tls" class="tab-content">
+    <div id="manager-tls-grid"></div>
+  </div>
+  <div id="tab-charts" class="tab-content">
+    <div class="charts-grid">
+      <div class="chart-card"><h4>📈 Évolution Météo par TL</h4><canvas id="chart-meteo"></canvas></div>
+      <div class="chart-card"><h4>📦 Statut des Projets par Semaine</h4><canvas id="chart-projets"></canvas></div>
+    </div>
+  </div>
+  <div id="tab-export" class="tab-content">
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:16px">📤 Exporter les données</h3>
+      <p style="color:var(--muted);margin-bottom:16px">Exportez toutes les fiches au format JSON (Power BI) ou CSV (Excel).</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-outline" style="width:auto" onclick="exportJSON()">⬇️ Export JSON</button>
+        <button class="btn btn-outline" style="width:auto" onclick="exportCSV()">⬇️ Export CSV</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="page-tl-detail" class="page">
+  <div class="breadcrumb"><a onclick="navigate('manager')">Manager</a> › <span id="tl-detail-name"></span></div>
+  <div class="page-header"><h2 id="tl-detail-title">Fiches de …</h2></div>
+  <div id="tl-detail-content"><div class="loading">Chargement…</div></div>
+</div>
+
+<div id="page-admin" class="page">
+  <div class="page-header"><h2>👥 Gestion des utilisateurs</h2></div>
+  <div class="card" style="margin-bottom:20px">
+    <h3 style="margin-bottom:16px">Inviter un Tech Lead</h3>
+    <div id="invite-alert"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><label>Prénom et Nom</label><input type="text" id="invite-name" placeholder="Mamadou Diallo"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="invite-email" placeholder="m.diallo@orange.sn"></div>
+      <div class="form-group"><label>Domaine / Spécialité</label><input type="text" id="invite-domaine" placeholder="Cloud, Sécurité, Réseau…"></div>
+      <div class="form-group"><label>Rôle</label>
+        <select id="invite-role"><option value="techLead">Tech Lead</option><option value="manager">Manager</option></select>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:auto" onclick="inviteUser()">Envoyer l'invitation</button>
+  </div>
+  <div class="card">
+    <h3 style="margin-bottom:4px">Utilisateurs enregistrés</h3>
+    <div id="admin-users-list"><div class="loading">Chargement…</div></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, serverTimestamp, updateDoc, deleteDoc }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBGmsK1CtRGfmsjsIVyiBp0BgIz43v16FY",
+  authDomain: "fiche-meteo-skillcenter.firebaseapp.com",
+  projectId: "fiche-meteo-skillcenter",
+  storageBucket: "fiche-meteo-skillcenter.firebasestorage.app",
+  messagingSenderId: "69295498344",
+  appId: "1:69295498344:web:c32e818f3121ef5184c7dd"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+let currentProfile = null;
+let ficheFormData = {};
+let ficheEditId = null;
+let ficheStepCurrent = 0;
+let allFiches = [];
+let allUsers = [];
+let chartMeteo = null;
+let chartProjets = null;
+
+const $ = id => document.getElementById(id);
+const METEO_SCORE = { Excellent: 4, Correct: 3, Difficile: 2, Critique: 1 };
+const METEO_EMOJI = { Excellent: '☀️', Correct: '⛅', Difficile: '🌧️', Critique: '⛈️' };
+const STATUS_CLASS = { 'EN COURS': 'status-en-cours', 'SOLDÉ': 'status-solde', 'BLOQUÉ': 'status-bloque' };
+
+function showAlert(id, msg, type = 'error') {
+  $(id).innerHTML = msg ? `<div class="alert alert-${type}">${msg}</div>` : '';
+}
+function getInitials(name) {
+  return (name || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+}
+function moisLabel(key) {
+  const [y, m] = key.split('-');
+  return new Date(+y, +m - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+}
+function getCurrentWeekInfo() {
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const weekNum = Math.ceil(((now - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+  const moisKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const moisLbl = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return { weekNum, semaineKey: `S${weekNum}`, label: `Semaine ${weekNum}`, moisKey, moisLabel: moisLbl };
+}
+function meteoClass(m) {
+  const map = { Excellent: 'excellent', Correct: 'correct', Difficile: 'difficile', Critique: 'critique' };
+  return 'meteo-' + (map[m] || 'correct');
 }
 
-// Météo selection
-document.querySelectorAll('#meteoGrid .meteo-option').forEach(opt => {
-  opt.addEventListener('click', () => {
-    document.querySelectorAll('#meteoGrid .meteo-option').forEach(o => o.classList.remove('selected'));
-    opt.classList.add('selected');
-    opt.querySelector('input').checked = true;
-  });
+// ── ROUTING ──────────────────────────────────────────────
+window.navigate = function(route, param) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pages = {
+    login: 'page-login', home: 'page-home', month: 'page-month',
+    'fiche-new': 'page-fiche-form', 'fiche-view': 'page-fiche-view',
+    'fiche-edit': 'page-fiche-form', manager: 'page-manager',
+    admin: 'page-admin', 'tl-detail': 'page-tl-detail'
+  };
+  const pageId = pages[route];
+  if (!pageId) return;
+  $(pageId).classList.add('active');
+  if (route === 'login') { $('nav').style.display = 'none'; return; }
+  $('nav').style.display = 'flex';
+  if (route === 'home') loadHome();
+  else if (route === 'month') loadMonth(param);
+  else if (route === 'fiche-new') startFicheForm(null);
+  else if (route === 'fiche-view') loadFicheView(param);
+  else if (route === 'fiche-edit') startFicheForm(param);
+  else if (route === 'manager') loadManager();
+  else if (route === 'admin') loadAdmin();
+  else if (route === 'tl-detail') loadTLDetail(param);
+};
+
+window.showManagerTab = function(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  $('tab-' + tab).classList.add('active');
+  if (tab === 'charts') renderManagerCharts();
+};
+
+// ── AUTH ─────────────────────────────────────────────────
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    currentUser = user;
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (snap.exists()) {
+      currentProfile = snap.data();
+    } else {
+      const usersSnap = await getDocs(collection(db, 'users'));
+      const role = usersSnap.empty ? 'manager' : 'techLead';
+      currentProfile = { email: user.email, name: user.displayName || user.email.split('@')[0], domaine: '', role };
+      await setDoc(doc(db, 'users', user.uid), { ...currentProfile, createdAt: serverTimestamp() });
+    }
+    $('nav-user').textContent = currentProfile.name || currentProfile.email;
+    if (currentProfile.role === 'manager') {
+      $('nav-manager-btn').style.display = 'inline-block';
+      $('nav-admin-btn').style.display = 'inline-block';
+    }
+    navigate('home');
+  } else {
+    currentUser = null; currentProfile = null;
+    navigate('login');
+  }
 });
 
-function statusSelect(val) {
-  val = val || '';
-  const sel = document.createElement('select');
-  sel.style.fontSize = '11px';
-  sel.style.fontWeight = '700';
-  sel.style.borderRadius = '20px';
-  sel.style.padding = '3px 8px';
-  sel.style.cursor = 'pointer';
-  ['', ...STATUTS].forEach(s => {
-    const o = document.createElement('option');
-    o.value = s; o.textContent = s || '— Statut —';
-    if (s === val) o.selected = true;
-    sel.appendChild(o);
-  });
-  function applyColor() {
-    if (sel.value === 'BLOQUÉ') { sel.style.background = '#FEE2E2'; sel.style.color = '#991B1B'; }
-    else if (sel.value === 'SOLDÉ') { sel.style.background = '#D1FAE5'; sel.style.color = '#065F46'; }
-    else if (sel.value === 'EN COURS') { sel.style.background = '#DBEAFE'; sel.style.color = '#1E40AF'; }
-    else { sel.style.background = ''; sel.style.color = ''; }
-  }
-  sel.addEventListener('change', applyColor);
-  applyColor();
-  return sel;
-}
-
-function blocageSelect(val) {
-  val = val || '';
-  const sel = document.createElement('select');
-  sel.style.fontSize = '11px';
-  sel.style.fontWeight = '700';
-  sel.style.borderRadius = '20px';
-  sel.style.padding = '3px 8px';
-  sel.style.cursor = 'pointer';
-  [['', '— ?'], ['Oui', 'Oui'], ['Non', 'Non']].forEach(([v, l]) => {
-    const o = document.createElement('option');
-    o.value = v; o.textContent = l;
-    if (v === val) o.selected = true;
-    sel.appendChild(o);
-  });
-  function applyColor() {
-    if (sel.value === 'Oui') { sel.style.background = '#FEE2E2'; sel.style.color = '#991B1B'; }
-    else if (sel.value === 'Non') { sel.style.background = '#D1FAE5'; sel.style.color = '#065F46'; }
-    else { sel.style.background = ''; sel.style.color = ''; }
-  }
-  sel.addEventListener('change', applyColor);
-  applyColor();
-  return sel;
-}
-
-function domaineSelect(val) {
-  val = val || '';
-  const sel = document.createElement('select');
-  ['', ...DOMAINES].forEach(d => {
-    const o = document.createElement('option');
-    o.value = d; o.textContent = d || '— Domaine —';
-    if (d === val) o.selected = true;
-    sel.appendChild(o);
-  });
-  return sel;
-}
-
-function progressCell(val) {
-  val = val || 0;
-  const td = document.createElement('td');
-  td.className = 'progress-cell';
-  const wrap = document.createElement('div');
-  wrap.className = 'progress-wrap';
-  const inp = document.createElement('input');
-  inp.type = 'number'; inp.min = 0; inp.max = 100; inp.value = val;
-  inp.style.width = '44px'; inp.style.textAlign = 'center';
-  const bar = document.createElement('div');
-  bar.className = 'progress-bar';
-  const fill = document.createElement('div');
-  fill.className = 'progress-fill';
-  fill.style.width = val + '%';
-  bar.appendChild(fill);
-  const pct = document.createElement('span');
-  pct.className = 'progress-pct';
-  pct.textContent = val + '%';
-  inp.addEventListener('input', () => {
-    const v = Math.min(100, Math.max(0, inp.value || 0));
-    inp.value = v;
-    fill.style.width = v + '%';
-    pct.textContent = v + '%';
-  });
-  wrap.appendChild(inp); wrap.appendChild(bar); wrap.appendChild(pct);
-  td.appendChild(wrap);
-  return td;
-}
-
-function textInput(placeholder, val) {
-  const i = document.createElement('input');
-  i.type = 'text'; i.placeholder = placeholder || ''; i.value = val || '';
-  return i;
-}
-
-function dateInput(val) {
-  const i = document.createElement('input');
-  i.type = 'date'; i.value = val || '';
-  return i;
-}
-
-function mkTd(content, cls) {
-  const cell = document.createElement('td');
-  if (cls) cell.className = cls;
-  if (typeof content === 'string' || typeof content === 'number') cell.textContent = content;
-  else cell.appendChild(content);
-  return cell;
-}
-
-function rowNum(tbody) { return tbody.children.length + 1; }
-
-function renumberRows(tbody) {
-  Array.from(tbody.querySelectorAll('tr')).forEach((tr, i) => {
-    const n = tr.querySelector('.td-num');
-    if (n) n.textContent = i + 1;
-  });
-}
-
-function makeDelBtn(tr, tbody) {
-  const btn = document.createElement('button');
-  btn.className = 'del-btn'; btn.textContent = '✕';
-  btn.onclick = () => { tr.remove(); renumberRows(tbody); };
-  return btn;
-}
-
-function addProjetRow(data) {
-  data = data || {};
-  const tbody = document.getElementById('projetsTbody');
-  const tr = document.createElement('tr');
-  tr.appendChild(mkTd(rowNum(tbody), 'td-num'));
-  tr.appendChild(mkTd(textInput('LIV-CAS-XXXXXX', data.ref)));
-  tr.appendChild(mkTd(textInput('Nom client', data.client)));
-  tr.appendChild(mkTd(domaineSelect(data.domaine)));
-  tr.appendChild(mkTd(statusSelect(data.statut)));
-  tr.appendChild(progressCell(data.avancement));
-  tr.appendChild(mkTd(blocageSelect(data.blocage)));
-  tr.appendChild(mkTd(textInput('Action réalisée', data.action)));
-  tr.appendChild(mkTd(makeDelBtn(tr, tbody)));
-  tbody.appendChild(tr);
-}
-
-function addSupportRow(data) {
-  data = data || {};
-  const tbody = document.getElementById('supportsTbody');
-  const tr = document.createElement('tr');
-  tr.appendChild(mkTd(rowNum(tbody), 'td-num'));
-  tr.appendChild(mkTd(textInput('Nom client', data.client)));
-  tr.appendChild(mkTd(domaineSelect(data.domaine)));
-  tr.appendChild(mkTd(statusSelect(data.statut)));
-  tr.appendChild(progressCell(data.avancement));
-  tr.appendChild(mkTd(blocageSelect(data.blocage)));
-  tr.appendChild(mkTd(textInput('Action réalisée', data.action)));
-  tr.appendChild(mkTd(makeDelBtn(tr, tbody)));
-  tbody.appendChild(tr);
-}
-
-function addBlocageRow(data) {
-  data = data || {};
-  const tbody = document.getElementById('blocagesTbody');
-  const tr = document.createElement('tr');
-  tr.appendChild(mkTd(rowNum(tbody), 'td-num'));
-  tr.appendChild(mkTd(textInput('Client / LIVCASE', data.projet)));
-  tr.appendChild(mkTd(textInput('Type de blocage', data.type)));
-  tr.appendChild(mkTd(textInput('Action requise par qui', data.action)));
-  tr.appendChild(mkTd(makeDelBtn(tr, tbody)));
-  tbody.appendChild(tr);
-}
-
-function addLivraisonRow(data) {
-  data = data || {};
-  const tbody = document.getElementById('livraisonsTbody');
-  const tr = document.createElement('tr');
-  tr.appendChild(mkTd(rowNum(tbody), 'td-num'));
-  tr.appendChild(mkTd(textInput('Client / Réf.', data.projet)));
-  tr.appendChild(mkTd(dateInput(data.dateAffect)));
-  tr.appendChild(mkTd(dateInput(data.dateLiv)));
-  tr.appendChild(mkTd(textInput('Commentaire', data.comment)));
-  tr.appendChild(mkTd(makeDelBtn(tr, tbody)));
-  tbody.appendChild(tr);
-}
-
-function addActionRow(data) {
-  data = data || {};
-  const tbody = document.getElementById('actionsTbody');
-  const tr = document.createElement('tr');
-  tr.appendChild(mkTd(rowNum(tbody), 'td-num'));
-  tr.appendChild(mkTd(textInput("Description de l'action", data.action)));
-  tr.appendChild(mkTd(textInput('Client / Réf.', data.projet)));
-  tr.appendChild(mkTd(textInput('JJ/MM ou S__', data.delai)));
-  tr.appendChild(mkTd(textInput('Support requis', data.support)));
-  tr.appendChild(mkTd(makeDelBtn(tr, tbody)));
-  tbody.appendChild(tr);
-}
-
-function extractTable(tbodyId, cols) {
-  const rows = [];
-  document.getElementById(tbodyId).querySelectorAll('tr').forEach(tr => {
-    const cells = tr.querySelectorAll('td');
-    const row = {};
-    cols.forEach((col, i) => {
-      const cell = cells[i + 1];
-      if (!cell) return;
-      const numInp = cell.querySelector('input[type="number"]');
-      if (numInp) { row[col] = numInp.value; return; }
-      const inp = cell.querySelector('input, select');
-      row[col] = inp ? inp.value : cell.textContent.trim();
-    });
-    rows.push(row);
-  });
-  return rows;
-}
-
-function getMeteo() {
-  const sel = document.querySelector('#meteoGrid .meteo-option.selected');
-  if (!sel) return null;
-  const map = { Excellent: '☀️', Correct: '⛅', Difficile: '🌧️', Critique: '⛈️' };
-  const col = { Excellent: '#10B981', Correct: '#3B82F6', Difficile: '#F59E0B', Critique: '#EF4444' };
-  return { label: sel.dataset.val, emoji: map[sel.dataset.val] || '', color: col[sel.dataset.val] };
-}
-
-function statusBadge(s) {
-  if (!s) return '—';
-  const map = { 'EN COURS': '#DBEAFE:#1E40AF', 'SOLDÉ': '#D1FAE5:#065F46', 'BLOQUÉ': '#FEE2E2:#991B1B' };
-  const pair = map[s] || '#F3F4F6:#6B7280';
-  const [bg, col] = pair.split(':');
-  return '<span style="background:' + bg + ';color:' + col + ';padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;">' + s + '</span>';
-}
-
-function blocageBadge(b) {
-  if (b === 'Oui') return '<span style="background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;">Oui</span>';
-  if (b === 'Non') return '<span style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;">Non</span>';
-  return '—';
-}
-
-function tableHtml(headers, rows) {
-  const thead = '<thead><tr>' + headers.map(h => '<th>' + h + '</th>').join('') + '</tr></thead>';
-  const tbody = '<tbody>' + rows.map(r =>
-    '<tr>' + r.map(c => '<td style="padding:8px 6px;font-size:13px;">' + (c != null ? c : '') + '</td>').join('') + '</tr>'
-  ).join('') + '</tbody>';
-  return '<div class="table-wrapper"><table>' + thead + tbody + '</table></div>';
-}
-
-function gv(id) { const el = document.getElementById(id); return el ? el.value : ''; }
-
-function renderPreview() {
-  const meteo = getMeteo();
-  const projets = extractTable('projetsTbody', ['ref', 'client', 'domaine', 'statut', 'avancement', 'blocage', 'action']);
-  const supports = extractTable('supportsTbody', ['client', 'domaine', 'statut', 'avancement', 'blocage', 'action']);
-  const blocages = extractTable('blocagesTbody', ['projet', 'type', 'action']);
-  const livraisons = extractTable('livraisonsTbody', ['projet', 'dateAffect', 'dateLiv', 'comment']);
-  const actions = extractTable('actionsTbody', ['action', 'projet', 'delai', 'support']);
-
-  const meteorender = meteo
-    ? '<div class="kv-item"><div class="kv-label">Météo</div><div class="meteo-badge" style="background:' + meteo.color + '22;color:' + meteo.color + '">' + meteo.emoji + ' ' + meteo.label + '</div></div>'
-    : '';
-
-  document.getElementById('preview').innerHTML =
-    '<div class="card summary-section">' +
-      '<div class="card-header">Orange Business Sénégal — SKILL CENTER | Fiche Météo Hebdomadaire</div>' +
-      '<div class="card-body">' +
-        '<div class="summary-kv">' +
-          '<div class="kv-item"><div class="kv-label">Tech Lead</div><div class="kv-value">' + (gv('techLead') || '—') + '</div></div>' +
-          '<div class="kv-item"><div class="kv-label">Semaine</div><div class="kv-value">' + (gv('semaine') || '—') + '</div></div>' +
-          '<div class="kv-item"><div class="kv-label">Domaine</div><div class="kv-value">' + (gv('domaine') || '—') + '</div></div>' +
-          '<div class="kv-item"><div class="kv-label">Date soumission</div><div class="kv-value">' + (gv('dateSubmit') || '—') + '</div></div>' +
-          meteorender +
-        '</div>' +
-      '</div>' +
-    '</div>' +
-
-    '<div class="card summary-section">' +
-      '<div class="card-header">Suivi des Projets en Charge</div>' +
-      '<div class="card-body">' +
-        tableHtml(['#','Réf. Projet','Client','Domaine','Statut','Av.','Blocage','Action Réalisée'],
-          projets.map((r, i) => [i+1, r.ref||'—', r.client||'—', r.domaine||'—', statusBadge(r.statut), (r.avancement||'0')+'%', blocageBadge(r.blocage), r.action||'—'])) +
-      '</div>' +
-    '</div>' +
-
-    '<div class="card summary-section">' +
-      '<div class="card-header">Suivi des Supports</div>' +
-      '<div class="card-body">' +
-        tableHtml(['#','Client','Domaine','Statut','Av.','Blocage','Action Réalisée'],
-          supports.map((r, i) => [i+1, r.client||'—', r.domaine||'—', statusBadge(r.statut), (r.avancement||'0')+'%', blocageBadge(r.blocage), r.action||'—'])) +
-      '</div>' +
-    '</div>' +
-
-    '<div class="card summary-section">' +
-      '<div class="card-header">Blocages Identifiés</div>' +
-      '<div class="card-body">' +
-        tableHtml(['#','Projet / Client','Type de Blocage','Action Demandée'],
-          blocages.map((r, i) => [i+1, r.projet||'—', r.type||'—', r.action||'—'])) +
-      '</div>' +
-    '</div>' +
-
-    '<div class="card summary-section">' +
-      '<div class="card-header">Temps de Livraison — Projets Clôturés</div>' +
-      '<div class="card-body">' +
-        tableHtml(['#','Projet / Client','Date Affectation','Date Livraison','Commentaire'],
-          livraisons.map((r, i) => [i+1, r.projet||'—', r.dateAffect||'—', r.dateLiv||'—', r.comment||''])) +
-      '</div>' +
-    '</div>' +
-
-    '<div class="card summary-section">' +
-      '<div class="card-header">Plan d\'Actions — NEXT WEEK</div>' +
-      '<div class="card-body">' +
-        tableHtml(['P.','Action à Réaliser','Projet / Client','Délai Cible','Support Requis'],
-          actions.map((r, i) => [i+1, r.action||'—', r.projet||'—', r.delai||'—', r.support||''])) +
-      '</div>' +
-    '</div>';
-}
-
-function saveData() {
-  const data = {
-    techLead: gv('techLead'), semaine: gv('semaine'), domaine: gv('domaine'),
-    dateSubmit: gv('dateSubmit'),
-    meteo: (document.querySelector('#meteoGrid .meteo-option.selected') || {}).dataset?.val || '',
-    projets: extractTable('projetsTbody', ['ref', 'client', 'domaine', 'statut', 'avancement', 'blocage', 'action']),
-    supports: extractTable('supportsTbody', ['client', 'domaine', 'statut', 'avancement', 'blocage', 'action']),
-    blocages: extractTable('blocagesTbody', ['projet', 'type', 'action']),
-    livraisons: extractTable('livraisonsTbody', ['projet', 'dateAffect', 'dateLiv', 'comment']),
-    actions: extractTable('actionsTbody', ['action', 'projet', 'delai', 'support']),
-  };
-  try { localStorage.setItem('ficheMeteo', JSON.stringify(data)); toast('Données sauvegardées !', 'success'); }
-  catch(e) { toast('Erreur sauvegarde'); }
-}
-
-function loadData() {
-  let raw;
-  try { raw = localStorage.getItem('ficheMeteo'); } catch(e) { return; }
-  if (!raw) return;
+window.doLogin = async function() {
+  const email = $('login-email').value.trim();
+  const pwd = $('login-password').value;
+  if (!email || !pwd) { showAlert('login-alert', 'Veuillez remplir tous les champs.'); return; }
+  showAlert('login-alert', '');
   try {
-    const d = JSON.parse(raw);
-    if (d.techLead) document.getElementById('techLead').value = d.techLead;
-    if (d.semaine) document.getElementById('semaine').value = d.semaine;
-    if (d.domaine) document.getElementById('domaine').value = d.domaine;
-    if (d.dateSubmit) document.getElementById('dateSubmit').value = d.dateSubmit;
-    if (d.meteo) {
-      const opt = document.querySelector('#meteoGrid .meteo-option[data-val="' + d.meteo + '"]');
-      if (opt) { opt.classList.add('selected'); opt.querySelector('input').checked = true; }
+    await signInWithEmailAndPassword(auth, email, pwd);
+  } catch(e) {
+    const msgs = { 'auth/user-not-found': 'Utilisateur introuvable.', 'auth/wrong-password': 'Mot de passe incorrect.', 'auth/invalid-credential': 'Email ou mot de passe incorrect.' };
+    showAlert('login-alert', msgs[e.code] || 'Erreur : ' + e.message);
+  }
+};
+
+window.doSignOut = () => signOut(auth);
+
+window.doResetPwd = async function() {
+  const email = $('login-email').value.trim();
+  if (!email) { showAlert('login-alert', 'Entrez votre email puis cliquez sur Réinitialiser.', 'info'); return; }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showAlert('login-alert', 'Email de réinitialisation envoyé !', 'success');
+  } catch(e) { showAlert('login-alert', 'Erreur : ' + e.message); }
+};
+
+// ── HOME ─────────────────────────────────────────────────
+async function loadHome() {
+  $('home-content').innerHTML = '<div class="loading">Chargement…</div>';
+  const q = query(collection(db, 'fiches'), where('userId', '==', currentUser.uid), orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
+  const fiches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  if (!fiches.length) {
+    $('home-content').innerHTML = `<div class="empty-state"><div class="empty-icon">☀️</div>
+      <p>Aucune fiche météo pour l'instant.</p>
+      <button class="btn btn-primary" style="width:auto" onclick="navigate('fiche-new')">+ Créer ma première fiche</button></div>`;
+    return;
+  }
+
+  const byMonth = {};
+  fiches.forEach(f => { if (!byMonth[f.mois]) byMonth[f.mois] = []; byMonth[f.mois].push(f); });
+  const monthsSorted = Object.keys(byMonth).sort((a, b) => b.localeCompare(a));
+
+  $('home-content').innerHTML = `<div class="card-grid">${monthsSorted.map(mk => {
+    const list = byMonth[mk];
+    return `<div class="card-month" onclick="navigate('month','${mk}')">
+      <div class="month-icon">📅</div>
+      <div class="month-label">${list[0].moisLabel || moisLabel(mk)}</div>
+      <div class="month-count">${list.length} fiche${list.length > 1 ? 's' : ''}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ── MONTH ─────────────────────────────────────────────────
+async function loadMonth(moisKey) {
+  const label = moisLabel(moisKey);
+  $('month-breadcrumb').textContent = label;
+  $('month-title').textContent = '📅 ' + label;
+  $('month-content').innerHTML = '<div class="loading">Chargement…</div>';
+
+  const q = query(collection(db, 'fiches'), where('userId', '==', currentUser.uid), where('mois', '==', moisKey), orderBy('semaineNum', 'asc'));
+  const snap = await getDocs(q);
+  const fiches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  if (!fiches.length) {
+    $('month-content').innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>Aucune fiche pour ce mois.</p></div>`;
+    return;
+  }
+
+  $('month-content').innerHTML = `<div class="weeks-list">${fiches.map(f => `
+    <div class="card-week" onclick="navigate('fiche-view','${f.id}')">
+      <div>
+        <div style="font-weight:700">${f.semaine} – ${f.semaineLabel || f.semaine}</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-top:2px">${f.projets?.length || 0} projet(s)</div>
+      </div>
+      <div class="meteo-badge ${meteoClass(f.meteo)}">${METEO_EMOJI[f.meteo] || ''} ${f.meteo}</div>
+    </div>`).join('')}</div>`;
+}
+
+// ── FICHE FORM ────────────────────────────────────────────
+const STEPS = [
+  { title: 'Période', sub: 'Sélectionnez le mois et la semaine' },
+  { title: 'Météo Globale', sub: 'Comment s\'est passée cette semaine ?' },
+  { title: 'Projets', sub: 'État des projets de la semaine' },
+  { title: 'Support & Incidents', sub: 'Tickets, incidents, escalades' },
+  { title: 'Blocages & Risques', sub: 'Points bloquants et risques identifiés' },
+  { title: 'Livraisons & Actions', sub: 'Livrables et prochaines actions' },
+];
+
+function startFicheForm(editId) {
+  ficheEditId = editId; ficheStepCurrent = 0; ficheFormData = {};
+  if (editId) {
+    $('form-title').textContent = 'Modifier la Fiche Météo';
+    $('form-breadcrumb').textContent = 'Modification';
+    loadFicheForEdit(editId);
+  } else {
+    $('form-breadcrumb').textContent = 'Nouvelle Fiche';
+    $('form-title').textContent = 'Nouvelle Fiche Météo';
+    const wk = getCurrentWeekInfo();
+    ficheFormData = { mois: wk.moisKey, moisLabel: wk.moisLabel, semaine: wk.semaineKey, semaineNum: wk.weekNum, semaineLabel: wk.label };
+    renderStep();
+  }
+}
+
+async function loadFicheForEdit(id) {
+  const snap = await getDoc(doc(db, 'fiches', id));
+  if (snap.exists()) { ficheFormData = { ...snap.data() }; renderStep(); }
+}
+
+function renderStep() {
+  $('step-indicator').innerHTML = STEPS.map((_, i) =>
+    `<div class="step-dot ${i < ficheStepCurrent ? 'done' : i === ficheStepCurrent ? 'active' : ''}"></div>`).join('');
+
+  const s = STEPS[ficheStepCurrent];
+  let html = `<div class="step-title">${ficheStepCurrent + 1}/${STEPS.length} – ${s.title}</div>
+    <div class="step-subtitle">${s.sub}</div>`;
+
+  if (ficheStepCurrent === 0) html += renderStep0();
+  else if (ficheStepCurrent === 1) html += renderStep1();
+  else if (ficheStepCurrent === 2) html += renderStep2();
+  else if (ficheStepCurrent === 3) html += renderStep3();
+  else if (ficheStepCurrent === 4) html += renderStep4();
+  else if (ficheStepCurrent === 5) html += renderStep5();
+
+  html += `<div class="step-actions">
+    ${ficheStepCurrent > 0 ? `<button class="btn btn-secondary" onclick="stepPrev()">← Précédent</button>` : ''}
+    <button class="btn btn-primary" onclick="stepNext()">${ficheStepCurrent === STEPS.length - 1 ? '✅ Enregistrer' : 'Suivant →'}</button>
+  </div>`;
+  $('step-container').innerHTML = html;
+  showAlert('form-alert', '');
+}
+
+function renderStep0() {
+  const now = new Date();
+  let monthOpts = '';
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const lbl = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    monthOpts += `<option value="${key}" ${ficheFormData.mois === key ? 'selected' : ''}>${lbl}</option>`;
+  }
+  let weekOpts = '';
+  for (let i = 1; i <= 53; i++) {
+    weekOpts += `<option value="S${i}" data-num="${i}" ${ficheFormData.semaine === `S${i}` ? 'selected' : ''}>Semaine ${i}</option>`;
+  }
+  return `
+    <div class="form-group"><label>Mois</label><select id="f-mois">${monthOpts}</select></div>
+    <div class="form-group"><label>Semaine</label><select id="f-semaine">${weekOpts}</select></div>
+    <div class="form-group"><label>Domaine / Spécialité</label>
+      <input type="text" id="f-domaine" value="${ficheFormData.domaine || currentProfile?.domaine || ''}" placeholder="Cloud, Sécurité, Réseau…"></div>`;
+}
+
+function renderStep1() {
+  const options = [
+    { key: 'Excellent', emoji: '☀️', desc: 'Tout va très bien' },
+    { key: 'Correct', emoji: '⛅', desc: 'Quelques points à surveiller' },
+    { key: 'Difficile', emoji: '🌧️', desc: 'Des difficultés rencontrées' },
+    { key: 'Critique', emoji: '⛈️', desc: 'Situation critique' },
+  ];
+  return `<div class="meteo-options">${options.map(o => `
+    <div class="meteo-option ${ficheFormData.meteo === o.key ? 'selected' : ''}" onclick="selectMeteo('${o.key}',this)">
+      <div class="meteo-emoji">${o.emoji}</div>
+      <div class="meteo-name">${o.key}</div>
+      <div class="meteo-desc">${o.desc}</div>
+    </div>`).join('')}</div>
+  <div class="form-group" style="margin-top:16px"><label>Commentaire (optionnel)</label>
+    <textarea id="f-commentaire" placeholder="Résumé de la semaine…">${ficheFormData.commentaire || ''}</textarea></div>`;
+}
+
+window.selectMeteo = function(key, el) {
+  ficheFormData.meteo = key;
+  document.querySelectorAll('.meteo-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+};
+
+function renderStep2() {
+  const projets = ficheFormData.projets || [];
+  return `<div id="projets-list" class="dyn-list">
+    ${projets.map((p, i) => `<div class="dyn-item" style="grid-template-columns:2fr 1fr 1fr;">
+      <button class="remove-btn" onclick="removeProjet(${i})">✕</button>
+      <div class="form-group" style="margin:0"><label>Projet</label><input type="text" id="p-nom-${i}" value="${p.nom || ''}" placeholder="Nom du projet"></div>
+      <div class="form-group" style="margin:0"><label>Statut</label><select id="p-statut-${i}">
+        ${['EN COURS','SOLDÉ','BLOQUÉ'].map(t => `<option ${p.statut === t ? 'selected' : ''}>${t}</option>`).join('')}
+      </select></div>
+      <div class="form-group" style="margin:0"><label>Avancement %</label><input type="number" id="p-pct-${i}" min="0" max="100" value="${p.avancement || 0}"></div>
+      <div class="form-group" style="margin:0;grid-column:1/-1"><label>Commentaire</label><input type="text" id="p-comment-${i}" value="${p.commentaire || ''}" placeholder="Détails…"></div>
+    </div>`).join('')}
+  </div><button class="add-item-btn" onclick="addProjet()">+ Ajouter un projet</button>`;
+}
+
+window.addProjet = function() {
+  if (!ficheFormData.projets) ficheFormData.projets = [];
+  ficheFormData.projets.push({ nom: '', statut: 'EN COURS', avancement: 0, commentaire: '' });
+  saveStepData(); renderStep();
+};
+window.removeProjet = function(i) { ficheFormData.projets.splice(i, 1); saveStepData(); renderStep(); };
+
+function renderStep3() {
+  const items = ficheFormData.supports || [];
+  return `<div id="supports-list" class="dyn-list">
+    ${items.map((s, i) => `<div class="dyn-item" style="grid-template-columns:1fr 1fr 1fr;">
+      <button class="remove-btn" onclick="removeSupport(${i})">✕</button>
+      <div class="form-group" style="margin:0"><label>Référence</label><input type="text" id="s-ref-${i}" value="${s.ref || ''}" placeholder="INC-00123"></div>
+      <div class="form-group" style="margin:0"><label>Type</label><select id="s-type-${i}">
+        ${['Incident','Demande','Escalade','Autre'].map(t => `<option ${s.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+      </select></div>
+      <div class="form-group" style="margin:0"><label>Statut</label><select id="s-statut-${i}">
+        ${['Ouvert','En cours','Fermé'].map(t => `<option ${s.statut === t ? 'selected' : ''}>${t}</option>`).join('')}
+      </select></div>
+      <div class="form-group" style="margin:0;grid-column:1/-1"><label>Description</label><input type="text" id="s-desc-${i}" value="${s.description || ''}" placeholder="Détails…"></div>
+    </div>`).join('')}
+  </div><button class="add-item-btn" onclick="addSupport()">+ Ajouter un ticket / incident</button>`;
+}
+
+window.addSupport = function() {
+  if (!ficheFormData.supports) ficheFormData.supports = [];
+  ficheFormData.supports.push({ ref: '', type: 'Incident', statut: 'Ouvert', description: '' });
+  saveStepData(); renderStep();
+};
+window.removeSupport = function(i) { ficheFormData.supports.splice(i, 1); saveStepData(); renderStep(); };
+
+function renderStep4() {
+  const items = ficheFormData.blocages || [];
+  return `<div id="blocages-list" class="dyn-list">
+    ${items.map((b, i) => `<div class="dyn-item" style="grid-template-columns:1fr 1fr;">
+      <button class="remove-btn" onclick="removeBlocage(${i})">✕</button>
+      <div class="form-group" style="margin:0"><label>Description</label><textarea id="b-desc-${i}" placeholder="Point bloquant…">${b.description || ''}</textarea></div>
+      <div class="form-group" style="margin:0"><label>Action attendue</label><textarea id="b-action-${i}" placeholder="Besoin de…">${b.action || ''}</textarea></div>
+      <div class="form-group" style="margin:0;grid-column:1/-1"><label>Impact</label><select id="b-impact-${i}">
+        ${['Faible','Moyen','Élevé','Critique'].map(t => `<option ${b.impact === t ? 'selected' : ''}>${t}</option>`).join('')}
+      </select></div>
+    </div>`).join('')}
+  </div><button class="add-item-btn" onclick="addBlocage()">+ Ajouter un blocage / risque</button>`;
+}
+
+window.addBlocage = function() {
+  if (!ficheFormData.blocages) ficheFormData.blocages = [];
+  ficheFormData.blocages.push({ description: '', action: '', impact: 'Moyen' });
+  saveStepData(); renderStep();
+};
+window.removeBlocage = function(i) { ficheFormData.blocages.splice(i, 1); saveStepData(); renderStep(); };
+
+function renderStep5() {
+  const livraisons = ficheFormData.livraisons || [];
+  const actions = ficheFormData.actions || [];
+  return `
+    <div style="margin-bottom:20px">
+      <div style="font-weight:600;margin-bottom:8px">Livrables de la semaine</div>
+      <div id="livraisons-list" class="dyn-list">
+        ${livraisons.map((l, i) => `<div class="dyn-item">
+          <button class="remove-btn" onclick="removeLivraison(${i})">✕</button>
+          <div class="form-group" style="margin:0"><label>Livrable</label><input type="text" id="l-nom-${i}" value="${l.nom || ''}" placeholder="Document, déploiement…"></div>
+          <div class="form-group" style="margin:0"><label>Statut</label><select id="l-statut-${i}">
+            ${['Livré','En cours','Reporté'].map(t => `<option ${l.statut === t ? 'selected' : ''}>${t}</option>`).join('')}
+          </select></div>
+        </div>`).join('')}
+      </div>
+      <button class="add-item-btn" onclick="addLivraison()">+ Ajouter un livrable</button>
+    </div>
+    <div>
+      <div style="font-weight:600;margin-bottom:8px">Actions pour la semaine prochaine</div>
+      <div id="actions-list" class="dyn-list">
+        ${actions.map((a, i) => `<div class="dyn-item" style="grid-template-columns:2fr 1fr 1fr;">
+          <button class="remove-btn" onclick="removeAction(${i})">✕</button>
+          <div class="form-group" style="margin:0"><label>Action</label><input type="text" id="a-desc-${i}" value="${a.description || ''}" placeholder="Tâche à réaliser…"></div>
+          <div class="form-group" style="margin:0"><label>Responsable</label><input type="text" id="a-resp-${i}" value="${a.responsable || currentProfile?.name || ''}" placeholder="Nom"></div>
+          <div class="form-group" style="margin:0"><label>Échéance</label><input type="date" id="a-date-${i}" value="${a.echeance || ''}"></div>
+        </div>`).join('')}
+      </div>
+      <button class="add-item-btn" onclick="addAction()">+ Ajouter une action</button>
+    </div>`;
+}
+
+window.addLivraison = function() {
+  if (!ficheFormData.livraisons) ficheFormData.livraisons = [];
+  ficheFormData.livraisons.push({ nom: '', statut: 'En cours' }); saveStepData(); renderStep();
+};
+window.removeLivraison = function(i) { ficheFormData.livraisons.splice(i, 1); saveStepData(); renderStep(); };
+window.addAction = function() {
+  if (!ficheFormData.actions) ficheFormData.actions = [];
+  ficheFormData.actions.push({ description: '', responsable: currentProfile?.name || '', echeance: '' }); saveStepData(); renderStep();
+};
+window.removeAction = function(i) { ficheFormData.actions.splice(i, 1); saveStepData(); renderStep(); };
+
+function saveStepData() {
+  if (ficheStepCurrent === 0) {
+    const moisSel = $('f-mois'); const semSel = $('f-semaine');
+    if (moisSel) { ficheFormData.mois = moisSel.value; ficheFormData.moisLabel = moisSel.options[moisSel.selectedIndex].text; }
+    if (semSel) { ficheFormData.semaine = semSel.value; ficheFormData.semaineNum = parseInt(semSel.options[semSel.selectedIndex].dataset.num); ficheFormData.semaineLabel = 'Semaine ' + ficheFormData.semaineNum; }
+    if ($('f-domaine')) ficheFormData.domaine = $('f-domaine').value.trim();
+  } else if (ficheStepCurrent === 1) {
+    if ($('f-commentaire')) ficheFormData.commentaire = $('f-commentaire').value.trim();
+  } else if (ficheStepCurrent === 2) {
+    (ficheFormData.projets || []).forEach((p, i) => {
+      if ($(`p-nom-${i}`)) p.nom = $(`p-nom-${i}`).value;
+      if ($(`p-statut-${i}`)) p.statut = $(`p-statut-${i}`).value;
+      if ($(`p-pct-${i}`)) p.avancement = parseInt($(`p-pct-${i}`).value) || 0;
+      if ($(`p-comment-${i}`)) p.commentaire = $(`p-comment-${i}`).value;
+    });
+  } else if (ficheStepCurrent === 3) {
+    (ficheFormData.supports || []).forEach((s, i) => {
+      if ($(`s-ref-${i}`)) s.ref = $(`s-ref-${i}`).value;
+      if ($(`s-type-${i}`)) s.type = $(`s-type-${i}`).value;
+      if ($(`s-statut-${i}`)) s.statut = $(`s-statut-${i}`).value;
+      if ($(`s-desc-${i}`)) s.description = $(`s-desc-${i}`).value;
+    });
+  } else if (ficheStepCurrent === 4) {
+    (ficheFormData.blocages || []).forEach((b, i) => {
+      if ($(`b-desc-${i}`)) b.description = $(`b-desc-${i}`).value;
+      if ($(`b-action-${i}`)) b.action = $(`b-action-${i}`).value;
+      if ($(`b-impact-${i}`)) b.impact = $(`b-impact-${i}`).value;
+    });
+  } else if (ficheStepCurrent === 5) {
+    (ficheFormData.livraisons || []).forEach((l, i) => {
+      if ($(`l-nom-${i}`)) l.nom = $(`l-nom-${i}`).value;
+      if ($(`l-statut-${i}`)) l.statut = $(`l-statut-${i}`).value;
+    });
+    (ficheFormData.actions || []).forEach((a, i) => {
+      if ($(`a-desc-${i}`)) a.description = $(`a-desc-${i}`).value;
+      if ($(`a-resp-${i}`)) a.responsable = $(`a-resp-${i}`).value;
+      if ($(`a-date-${i}`)) a.echeance = $(`a-date-${i}`).value;
+    });
+  }
+}
+
+window.stepPrev = function() { saveStepData(); ficheStepCurrent--; renderStep(); };
+window.stepNext = async function() {
+  saveStepData();
+  if (ficheStepCurrent === 0 && !ficheFormData.mois) { showAlert('form-alert', 'Sélectionnez le mois et la semaine.'); return; }
+  if (ficheStepCurrent === 1 && !ficheFormData.meteo) { showAlert('form-alert', 'Sélectionnez la météo globale.'); return; }
+  if (ficheStepCurrent < STEPS.length - 1) { ficheStepCurrent++; renderStep(); }
+  else await saveFiche();
+};
+
+async function saveFiche() {
+  const btn = $('step-container').querySelector('.btn-primary');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    const data = {
+      ...ficheFormData,
+      userId: currentUser.uid,
+      userName: currentProfile.name || currentProfile.email,
+      userEmail: currentProfile.email,
+      domaine: ficheFormData.domaine || currentProfile.domaine || '',
+      dateSubmit: new Date().toISOString(),
+      updatedAt: serverTimestamp(),
+    };
+    if (ficheEditId) {
+      await updateDoc(doc(db, 'fiches', ficheEditId), data);
+      navigate('fiche-view', ficheEditId);
+    } else {
+      data.createdAt = serverTimestamp();
+      const ref = doc(collection(db, 'fiches'));
+      await setDoc(ref, data);
+      navigate('fiche-view', ref.id);
     }
-    if (d.projets && d.projets.length) { document.getElementById('projetsTbody').innerHTML = ''; d.projets.forEach(r => addProjetRow(r)); }
-    if (d.supports && d.supports.length) { document.getElementById('supportsTbody').innerHTML = ''; d.supports.forEach(r => addSupportRow(r)); }
-    if (d.blocages && d.blocages.length) { document.getElementById('blocagesTbody').innerHTML = ''; d.blocages.forEach(r => addBlocageRow(r)); }
-    if (d.livraisons && d.livraisons.length) { document.getElementById('livraisonsTbody').innerHTML = ''; d.livraisons.forEach(r => addLivraisonRow(r)); }
-    if (d.actions && d.actions.length) { document.getElementById('actionsTbody').innerHTML = ''; d.actions.forEach(r => addActionRow(r)); }
-  } catch(e) { console.error(e); }
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '✅ Enregistrer';
+    showAlert('form-alert', 'Erreur : ' + e.message);
+  }
 }
 
-function toast(msg, type) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'show' + (type ? ' ' + type : '');
-  setTimeout(() => { el.className = ''; }, 2500);
+// ── FICHE VIEW ────────────────────────────────────────────
+async function loadFicheView(id) {
+  $('fiche-view-content').innerHTML = '<div class="loading">Chargement…</div>';
+  const snap = await getDoc(doc(db, 'fiches', id));
+  if (!snap.exists()) { $('fiche-view-content').innerHTML = '<p>Fiche introuvable.</p>'; return; }
+  const f = { id: snap.id, ...snap.data() };
+
+  $('view-title').textContent = `${f.semaine} – ${f.moisLabel || moisLabel(f.mois)}`;
+  $('view-month-link').textContent = f.moisLabel || moisLabel(f.mois);
+  $('view-month-link').onclick = () => navigate('month', f.mois);
+
+  const canEdit = f.userId === currentUser.uid || currentProfile.role === 'manager';
+  $('view-edit-btn').style.display = canEdit ? '' : 'none';
+  $('view-edit-btn').onclick = () => navigate('fiche-edit', id);
+
+  let html = `<div class="card" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="flex:1">
+        <div style="font-size:1.1rem;font-weight:700">${f.userName} <span style="font-size:.85rem;color:var(--muted)">· ${f.domaine || ''}</span></div>
+        <div style="font-size:.85rem;color:var(--muted);margin-top:4px">${f.moisLabel || moisLabel(f.mois)} · ${f.semaine}</div>
+      </div>
+      <div class="meteo-badge ${meteoClass(f.meteo)}" style="font-size:1.1rem;padding:8px 20px">${METEO_EMOJI[f.meteo] || ''} ${f.meteo}</div>
+    </div>
+    ${f.commentaire ? `<p style="margin-top:12px;line-height:1.6">${f.commentaire}</p>` : ''}
+  </div>`;
+
+  if (f.projets?.length) {
+    html += `<div class="card fiche-section" style="margin-bottom:16px"><h4>Projets</h4>
+      <table class="fiche-table"><thead><tr><th>Projet</th><th>Statut</th><th>Avancement</th><th>Commentaire</th></tr></thead>
+      <tbody>${f.projets.map(p => `<tr>
+        <td>${p.nom}</td>
+        <td><span class="status-badge ${STATUS_CLASS[p.statut] || ''}">${p.statut}</span></td>
+        <td>${p.avancement}%</td><td>${p.commentaire || '–'}</td>
+      </tr>`).join('')}</tbody></table></div>`;
+  }
+
+  if (f.supports?.length) {
+    html += `<div class="card fiche-section" style="margin-bottom:16px"><h4>Support & Incidents</h4>
+      <table class="fiche-table"><thead><tr><th>Réf.</th><th>Type</th><th>Statut</th><th>Description</th></tr></thead>
+      <tbody>${f.supports.map(s => `<tr><td>${s.ref||'–'}</td><td>${s.type}</td><td>${s.statut}</td><td>${s.description||'–'}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+
+  if (f.blocages?.length) {
+    html += `<div class="card fiche-section" style="margin-bottom:16px"><h4>Blocages & Risques</h4>
+      <div class="dyn-list">${f.blocages.map(b => `<div style="padding:10px;background:#fafafa;border-radius:8px;border-left:3px solid #ff9800">
+        <div style="font-weight:600">${b.description}</div>
+        <div style="font-size:.85rem;color:var(--muted);margin-top:4px">Action : ${b.action||'–'} · Impact : <strong>${b.impact}</strong></div>
+      </div>`).join('')}</div></div>`;
+  }
+
+  if (f.livraisons?.length || f.actions?.length) {
+    html += `<div class="card fiche-section">`;
+    if (f.livraisons?.length) html += `<h4>Livrables</h4><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+      ${f.livraisons.map(l => `<span class="tag">${l.nom} (${l.statut})</span>`).join('')}</div>`;
+    if (f.actions?.length) html += `<h4>Actions prochaine semaine</h4>
+      <table class="fiche-table"><thead><tr><th>Action</th><th>Responsable</th><th>Échéance</th></tr></thead>
+      <tbody>${f.actions.map(a => `<tr><td>${a.description}</td><td>${a.responsable||'–'}</td><td>${a.echeance||'–'}</td></tr>`).join('')}</tbody></table>`;
+    html += `</div>`;
+  }
+
+  $('fiche-view-content').innerHTML = html;
 }
 
-// Init
-document.getElementById('dateSubmit').value = new Date().toISOString().split('T')[0];
-(function() {
-  const d = new Date();
-  const oneJan = new Date(d.getFullYear(), 0, 1);
-  const wk = Math.ceil(((d - oneJan) / 86400000 + oneJan.getDay() + 1) / 7);
-  document.getElementById('semaine').value = 'S' + wk;
-})();
+// ── MANAGER ───────────────────────────────────────────────
+async function loadManager() {
+  $('manager-stats').innerHTML = '<div class="loading">Chargement…</div>';
+  const [fichesSnap, usersSnap] = await Promise.all([
+    getDocs(query(collection(db, 'fiches'), orderBy('createdAt', 'desc'))),
+    getDocs(collection(db, 'users'))
+  ]);
+  allFiches = fichesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  allUsers = usersSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.role === 'techLead');
+  renderManagerOverview();
+  renderManagerTLs();
+}
 
-// Default rows
-for (let i = 0; i < 3; i++) addProjetRow();
-for (let i = 0; i < 3; i++) addSupportRow();
-for (let i = 0; i < 2; i++) addBlocageRow();
-for (let i = 0; i < 2; i++) addLivraisonRow();
-for (let i = 0; i < 3; i++) addActionRow();
+function renderManagerOverview() {
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const fichesThisMonth = allFiches.filter(f => f.mois === thisMonth).length;
+  const scores = allFiches.map(f => METEO_SCORE[f.meteo]).filter(Boolean);
+  const avg = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : '–';
 
-loadData();
+  $('manager-stats').innerHTML = `<div class="summary-stats">
+    <div class="stat-card"><div class="stat-value">${allUsers.length}</div><div class="stat-label">Tech Leads</div></div>
+    <div class="stat-card"><div class="stat-value">${allFiches.length}</div><div class="stat-label">Total Fiches</div></div>
+    <div class="stat-card"><div class="stat-value">${fichesThisMonth}</div><div class="stat-label">Fiches ce mois</div></div>
+    <div class="stat-card"><div class="stat-value">${avg}</div><div class="stat-label">Score moyen météo</div></div>
+  </div>`;
+
+  $('manager-recent').innerHTML = `<div class="card"><h3 style="margin-bottom:16px">Dernières fiches</h3>
+    ${allFiches.slice(0, 10).map(f => `
+      <div class="user-row" style="cursor:pointer" onclick="navigate('fiche-view','${f.id}')">
+        <div class="user-info">
+          <div class="user-name">${f.userName} – ${f.semaine} ${f.moisLabel || ''}</div>
+          <div class="user-email">${f.domaine || ''}</div>
+        </div>
+        <div class="meteo-badge ${meteoClass(f.meteo)}">${METEO_EMOJI[f.meteo]||''} ${f.meteo}</div>
+      </div>`).join('')}</div>`;
+}
+
+function renderManagerTLs() {
+  $('manager-tls-grid').innerHTML = `<div class="tl-grid">${allUsers.map(u => {
+    const count = allFiches.filter(f => f.userId === u.id).length;
+    return `<div class="tl-card" onclick="navigate('tl-detail','${u.id}')">
+      <div class="tl-avatar">${getInitials(u.name)}</div>
+      <div class="tl-name">${u.name}</div>
+      <div class="tl-domain">${u.domaine || u.email}</div>
+      <div class="tl-count">${count} fiche(s)</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function renderManagerCharts() {
+  if (!allFiches.length) return;
+  const weeks = [...new Set(allFiches.map(f => f.semaine))].sort();
+  const colors = ['#FF6B00','#2196f3','#4caf50','#9c27b0','#f44336','#ff9800','#00bcd4'];
+
+  if (chartMeteo) chartMeteo.destroy();
+  chartMeteo = new Chart($('chart-meteo'), {
+    type: 'line',
+    data: {
+      labels: weeks,
+      datasets: allUsers.map((u, i) => ({
+        label: u.name,
+        data: weeks.map(wk => { const f = allFiches.find(x => x.userId === u.id && x.semaine === wk); return f ? METEO_SCORE[f.meteo] : null; }),
+        borderColor: colors[i % colors.length],
+        backgroundColor: colors[i % colors.length] + '33',
+        tension: 0.3, spanGaps: true,
+      }))
+    },
+    options: { responsive: true, scales: { y: { min: 1, max: 4, ticks: { callback: v => ['','Critique','Difficile','Correct','Excellent'][v] } } }, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  if (chartProjets) chartProjets.destroy();
+  chartProjets = new Chart($('chart-projets'), {
+    type: 'bar',
+    data: {
+      labels: weeks,
+      datasets: [
+        { label: 'EN COURS', backgroundColor: '#2196f3', data: weeks.map(wk => allFiches.filter(f => f.semaine === wk).reduce((s, f) => s + (f.projets||[]).filter(p => p.statut === 'EN COURS').length, 0)) },
+        { label: 'SOLDÉ', backgroundColor: '#4caf50', data: weeks.map(wk => allFiches.filter(f => f.semaine === wk).reduce((s, f) => s + (f.projets||[]).filter(p => p.statut === 'SOLDÉ').length, 0)) },
+        { label: 'BLOQUÉ', backgroundColor: '#f44336', data: weeks.map(wk => allFiches.filter(f => f.semaine === wk).reduce((s, f) => s + (f.projets||[]).filter(p => p.statut === 'BLOQUÉ').length, 0)) },
+      ]
+    },
+    options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { legend: { position: 'bottom' } } }
+  });
+}
+
+// ── TL DETAIL ─────────────────────────────────────────────
+async function loadTLDetail(uid) {
+  const userSnap = await getDoc(doc(db, 'users', uid));
+  const u = userSnap.exists() ? userSnap.data() : { name: 'Inconnu' };
+  $('tl-detail-name').textContent = u.name;
+  $('tl-detail-title').textContent = `Fiches de ${u.name}`;
+
+  const q = query(collection(db, 'fiches'), where('userId', '==', uid), orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
+  const fiches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  if (!fiches.length) { $('tl-detail-content').innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>Aucune fiche.</p></div>'; return; }
+
+  const byMonth = {};
+  fiches.forEach(f => { if (!byMonth[f.mois]) byMonth[f.mois] = []; byMonth[f.mois].push(f); });
+
+  $('tl-detail-content').innerHTML = Object.keys(byMonth).sort((a, b) => b.localeCompare(a)).map(mk => `
+    <div style="margin-bottom:24px">
+      <h3 style="margin-bottom:12px;color:var(--orange)">${byMonth[mk][0].moisLabel || moisLabel(mk)}</h3>
+      <div class="weeks-list">${byMonth[mk].map(f => `
+        <div class="card-week" onclick="navigate('fiche-view','${f.id}')">
+          <div><div style="font-weight:700">${f.semaine}</div><div style="font-size:.82rem;color:var(--muted)">${f.projets?.length||0} projet(s)</div></div>
+          <div class="meteo-badge ${meteoClass(f.meteo)}">${METEO_EMOJI[f.meteo]||''} ${f.meteo}</div>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ── ADMIN ─────────────────────────────────────────────────
+async function loadAdmin() {
+  const snap = await getDocs(collection(db, 'users'));
+  const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  $('admin-users-list').innerHTML = !users.length ? '<p style="color:var(--muted)">Aucun utilisateur.</p>'
+    : users.map(u => `<div class="user-row">
+        <div class="user-info">
+          <div class="user-name">${u.name || '–'}</div>
+          <div class="user-email">${u.email} · ${u.domaine || ''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="role-badge role-${u.role}">${u.role === 'manager' ? 'Manager' : 'Tech Lead'}</span>
+          ${u.id !== currentUser.uid ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}','${u.email}')">Supprimer</button>` : ''}
+        </div>
+      </div>`).join('');
+}
+
+window.inviteUser = async function() {
+  const name = $('invite-name').value.trim();
+  const email = $('invite-email').value.trim();
+  const domaine = $('invite-domaine').value.trim();
+  const role = $('invite-role').value;
+  if (!name || !email) { showAlert('invite-alert', 'Nom et email requis.'); return; }
+  showAlert('invite-alert', '');
+  const tempPwd = 'TempPwd!' + Math.random().toString(36).slice(2, 8);
+  try {
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${firebaseConfig.apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: tempPwd, returnSecureToken: true })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    await setDoc(doc(db, 'users', data.localId), { email, name, domaine, role, createdAt: serverTimestamp(), createdBy: currentUser.uid });
+
+    await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseConfig.apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestType: 'PASSWORD_RESET', email })
+    });
+
+    showAlert('invite-alert', `✅ Invitation envoyée à ${email} !`, 'success');
+    $('invite-name').value = ''; $('invite-email').value = ''; $('invite-domaine').value = '';
+    loadAdmin();
+  } catch(e) {
+    showAlert('invite-alert', 'Erreur : ' + (e.message === 'EMAIL_EXISTS' ? 'Email déjà utilisé.' : e.message));
+  }
+};
+
+window.deleteUser = async function(uid, email) {
+  if (!confirm(`Supprimer ${email} ?`)) return;
+  await deleteDoc(doc(db, 'users', uid)); loadAdmin();
+};
+
+// ── EXPORT ────────────────────────────────────────────────
+window.exportJSON = function() {
+  const blob = new Blob([JSON.stringify(allFiches.map(f => { const d={...f}; delete d.createdAt; delete d.updatedAt; return d; }), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `fiches-meteo-${new Date().toISOString().slice(0,10)}.json`; a.click();
+};
+
+window.exportCSV = function() {
+  const rows = [['ID','TL','Email','Domaine','Mois','Semaine','Météo','EN COURS','SOLDÉS','BLOQUÉS','Blocages','Date']];
+  allFiches.forEach(f => rows.push([
+    f.id, f.userName, f.userEmail, f.domaine||'', f.moisLabel||f.mois, f.semaine, f.meteo,
+    (f.projets||[]).filter(p=>p.statut==='EN COURS').length,
+    (f.projets||[]).filter(p=>p.statut==='SOLDÉ').length,
+    (f.projets||[]).filter(p=>p.statut==='BLOQUÉ').length,
+    (f.blocages||[]).length,
+    f.dateSubmit ? new Date(f.dateSubmit).toLocaleDateString('fr-FR') : ''
+  ]));
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `fiches-meteo-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+};
 </script>
 </body>
 </html>
