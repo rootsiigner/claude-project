@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fiche Météo Weekly – Orange Business Sénégal SKILL CENTER</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
   :root {
     --orange: #FF6B00;
@@ -57,6 +58,8 @@
   .btn-sm { padding: 6px 14px; font-size: 0.82rem; }
   .btn-outline { background: transparent; border: 2px solid var(--orange); color: var(--orange); }
   .btn-outline:hover { background: var(--orange-light); }
+  .btn-ppt { background: #c1440e; color: #fff; }
+  .btn-ppt:hover { background: #a33a0c; }
 
   .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
   .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
@@ -128,7 +131,7 @@
   .tl-card .tl-domain { font-size: 0.85rem; color: var(--muted); }
   .tl-card .tl-count { font-size: 0.82rem; margin-top: 8px; color: var(--orange); }
 
-  .tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+  .tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--border); margin-bottom: 20px; flex-wrap: wrap; }
   .tab { padding: 10px 20px; cursor: pointer; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .2s; }
   .tab.active { color: var(--orange); border-bottom-color: var(--orange); }
   .tab:hover:not(.active) { color: var(--text); }
@@ -174,6 +177,14 @@
   .stat-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; text-align: center; }
   .stat-card .stat-value { font-size: 2rem; font-weight: 700; color: var(--orange); }
   .stat-card .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+
+  /* Modal PPT */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: #fff; border-radius: 16px; padding: 32px; width: 100%; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+  .modal-box h3 { font-size: 1.2rem; margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
+  .modal-actions .btn { flex: 1; }
 </style>
 </head>
 <body>
@@ -188,6 +199,25 @@
     <button class="btn-nav" onclick="doSignOut()">Déconnexion</button>
   </div>
 </nav>
+
+<!-- Modal téléchargement PPT (manager) -->
+<div class="modal-overlay" id="ppt-modal">
+  <div class="modal-box">
+    <h3>📥 Télécharger la Fiche PPT</h3>
+    <div class="form-group">
+      <label>Tech Lead</label>
+      <select id="ppt-tl-select"><option value="">— Sélectionner un TL —</option></select>
+    </div>
+    <div class="form-group">
+      <label>Fiche (semaine)</label>
+      <select id="ppt-fiche-select"><option value="">— Sélectionner d'abord un TL —</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closePptModal()">Annuler</button>
+      <button class="btn btn-ppt" onclick="downloadModalPPT()">📥 Télécharger PPT</button>
+    </div>
+  </div>
+</div>
 
 <div id="page-login" class="page active">
   <div class="login-card">
@@ -246,6 +276,7 @@
     <h2 id="view-title">Fiche Météo</h2>
     <div class="inline-actions no-print">
       <button class="btn btn-secondary btn-sm" id="view-edit-btn">✏️ Modifier</button>
+      <button class="btn btn-ppt btn-sm" id="view-ppt-btn">📥 PPT</button>
       <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Imprimer</button>
     </div>
   </div>
@@ -276,10 +307,22 @@
   <div id="tab-export" class="tab-content">
     <div class="card" style="margin-top:16px">
       <h3 style="margin-bottom:16px">📤 Exporter les données</h3>
-      <p style="color:var(--muted);margin-bottom:16px">Exportez toutes les fiches au format JSON (Power BI) ou CSV (Excel).</p>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <button class="btn btn-outline" style="width:auto" onclick="exportJSON()">⬇️ Export JSON</button>
-        <button class="btn btn-outline" style="width:auto" onclick="exportCSV()">⬇️ Export CSV</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+        <div style="border:1.5px solid var(--border);border-radius:10px;padding:20px">
+          <div style="font-size:1.5rem;margin-bottom:8px">📊</div>
+          <div style="font-weight:700;margin-bottom:6px">Export JSON / CSV</div>
+          <p style="color:var(--muted);font-size:.85rem;margin-bottom:12px">Pour Power BI et Excel</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" style="width:auto" onclick="exportJSON()">⬇️ JSON</button>
+            <button class="btn btn-outline btn-sm" style="width:auto" onclick="exportCSV()">⬇️ CSV</button>
+          </div>
+        </div>
+        <div style="border:1.5px solid #c1440e33;border-radius:10px;padding:20px;background:#fff8f5">
+          <div style="font-size:1.5rem;margin-bottom:8px">📥</div>
+          <div style="font-weight:700;margin-bottom:6px">Export PowerPoint</div>
+          <p style="color:var(--muted);font-size:.85rem;margin-bottom:12px">Télécharger la fiche d'un TL au format PPT</p>
+          <button class="btn btn-ppt btn-sm" style="width:auto" onclick="openPptModal()">📥 Choisir et télécharger</button>
+        </div>
       </div>
     </div>
   </div>
@@ -341,11 +384,14 @@ let allFiches = [];
 let allUsers = [];
 let chartMeteo = null;
 let chartProjets = null;
+let currentViewFiche = null; // fiche actuellement affichée
 
 const $ = id => document.getElementById(id);
 const METEO_SCORE = { Excellent: 4, Correct: 3, Difficile: 2, Critique: 1 };
 const METEO_EMOJI = { Excellent: '☀️', Correct: '⛅', Difficile: '🌧️', Critique: '⛈️' };
+const METEO_COLOR_PPT = { Excellent: '4CAF50', Correct: '2196F3', Difficile: 'FF9800', Critique: 'F44336' };
 const STATUS_CLASS = { 'EN COURS': 'status-en-cours', 'SOLDÉ': 'status-solde', 'BLOQUÉ': 'status-bloque' };
+const STATUS_COLOR_PPT = { 'EN COURS': '2196F3', 'SOLDÉ': '4CAF50', 'BLOQUÉ': 'F44336' };
 
 function showAlert(id, msg, type = 'error') {
   $(id).innerHTML = msg ? `<div class="alert alert-${type}">${msg}</div>` : '';
@@ -370,7 +416,269 @@ function meteoClass(m) {
   return 'meteo-' + (map[m] || 'correct');
 }
 
-// ── ROUTING ──────────────────────────────────────────────
+// ── PPT GENERATION ────────────────────────────────────────
+window.generatePPT = function(fiche) {
+  const pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE';
+  pptx.title = `Fiche Météo – ${fiche.userName} – ${fiche.semaine}`;
+
+  const ORANGE = 'FF6B00';
+  const DARK = '222222';
+  const LIGHT_BG = 'FFF8F5';
+  const meteoCol = METEO_COLOR_PPT[fiche.meteo] || '2196F3';
+
+  // ── Slide 1 : Couverture ─────────────────────────────
+  const s1 = pptx.addSlide();
+  s1.background = { color: ORANGE };
+
+  s1.addText('ORANGE BUSINESS SÉNÉGAL', {
+    x: 0.5, y: 0.4, w: 12, h: 0.4,
+    fontSize: 11, color: 'FFFFFF', bold: false, align: 'center', transparency: 30
+  });
+  s1.addText('SKILL CENTER', {
+    x: 0.5, y: 0.75, w: 12, h: 0.35,
+    fontSize: 10, color: 'FFFFFF', align: 'center', transparency: 30
+  });
+  s1.addText('Fiche Météo Weekly', {
+    x: 0.5, y: 1.6, w: 12, h: 0.9,
+    fontSize: 40, bold: true, color: 'FFFFFF', align: 'center'
+  });
+  s1.addText(`${fiche.moisLabel || moisLabel(fiche.mois)} · ${fiche.semaine}`, {
+    x: 0.5, y: 2.6, w: 12, h: 0.5,
+    fontSize: 20, color: 'FFFFFF', align: 'center', transparency: 15
+  });
+
+  // Météo badge
+  const meteoEmojis = { Excellent: '☀', Correct: '⛅', Difficile: '🌧', Critique: '⛈' };
+  s1.addShape(pptx.ShapeType.roundRect, {
+    x: 4.5, y: 3.3, w: 4, h: 0.9,
+    fill: { color: meteoCol },
+    line: { color: meteoCol },
+    rectRadius: 0.15
+  });
+  s1.addText(`${fiche.meteo}`, {
+    x: 4.5, y: 3.3, w: 4, h: 0.9,
+    fontSize: 22, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle'
+  });
+
+  s1.addText(`Tech Lead : ${fiche.userName}`, {
+    x: 0.5, y: 4.4, w: 12, h: 0.35,
+    fontSize: 13, color: 'FFFFFF', align: 'center', transparency: 20
+  });
+  s1.addText(fiche.domaine || '', {
+    x: 0.5, y: 4.75, w: 12, h: 0.3,
+    fontSize: 11, color: 'FFFFFF', align: 'center', transparency: 35
+  });
+  s1.addText(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, {
+    x: 0.5, y: 6.8, w: 12, h: 0.25,
+    fontSize: 9, color: 'FFFFFF', align: 'center', transparency: 50
+  });
+
+  // ── Slide 2 : Résumé & Météo ─────────────────────────
+  const s2 = pptx.addSlide();
+  s2.background = { color: 'FFFFFF' };
+
+  // Header band
+  s2.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 1, fill: { color: ORANGE }, line: { color: ORANGE } });
+  s2.addText('Bilan de la Semaine', { x: 0.4, y: 0, w: 10, h: 1, fontSize: 22, bold: true, color: 'FFFFFF', valign: 'middle' });
+  s2.addText(`${fiche.semaine} · ${fiche.moisLabel || ''}`, { x: 9, y: 0, w: 4, h: 1, fontSize: 12, color: 'FFFFFF', align: 'right', valign: 'middle', transparency: 20 });
+
+  // Météo box
+  s2.addShape(pptx.ShapeType.roundRect, { x: 0.4, y: 1.2, w: 3.5, h: 2.2, fill: { color: meteoCol + '22' }, line: { color: meteoCol }, rectRadius: 0.12 });
+  s2.addText('Météo Globale', { x: 0.4, y: 1.2, w: 3.5, h: 0.5, fontSize: 10, color: meteoCol, bold: true, align: 'center', valign: 'middle' });
+  s2.addText(METEO_EMOJI[fiche.meteo] || '', { x: 0.4, y: 1.7, w: 3.5, h: 1, fontSize: 36, align: 'center' });
+  s2.addText(fiche.meteo || '', { x: 0.4, y: 2.7, w: 3.5, h: 0.55, fontSize: 16, bold: true, color: meteoCol, align: 'center' });
+
+  // Commentaire
+  if (fiche.commentaire) {
+    s2.addShape(pptx.ShapeType.roundRect, { x: 4.2, y: 1.2, w: 8.7, h: 2.2, fill: { color: 'F9F9F9' }, line: { color: 'E0E0E0' }, rectRadius: 0.1 });
+    s2.addText('Commentaire', { x: 4.4, y: 1.25, w: 8.3, h: 0.35, fontSize: 9, color: '999999', bold: true });
+    s2.addText(fiche.commentaire, { x: 4.4, y: 1.6, w: 8.3, h: 1.6, fontSize: 12, color: DARK, wrap: true, valign: 'top' });
+  }
+
+  // Stats résumé
+  const projets = fiche.projets || [];
+  const enCours = projets.filter(p => p.statut === 'EN COURS').length;
+  const soldes = projets.filter(p => p.statut === 'SOLDÉ').length;
+  const bloques = projets.filter(p => p.statut === 'BLOQUÉ').length;
+  const blocages = (fiche.blocages || []).length;
+
+  const stats = [
+    { label: 'Projets EN COURS', val: enCours, col: '2196F3' },
+    { label: 'Projets SOLDÉS', val: soldes, col: '4CAF50' },
+    { label: 'Projets BLOQUÉS', val: bloques, col: 'F44336' },
+    { label: 'Blocages / Risques', val: blocages, col: 'FF9800' },
+  ];
+  stats.forEach((st, i) => {
+    const x = 0.4 + i * 3.1;
+    s2.addShape(pptx.ShapeType.roundRect, { x, y: 3.6, w: 2.8, h: 1.4, fill: { color: st.col + '18' }, line: { color: st.col + '66' }, rectRadius: 0.1 });
+    s2.addText(String(st.val), { x, y: 3.65, w: 2.8, h: 0.75, fontSize: 28, bold: true, color: st.col, align: 'center', valign: 'middle' });
+    s2.addText(st.label, { x, y: 4.35, w: 2.8, h: 0.5, fontSize: 9, color: '666666', align: 'center', wrap: true });
+  });
+
+  // ── Slide 3 : Projets ────────────────────────────────
+  if (projets.length > 0) {
+    const s3 = pptx.addSlide();
+    s3.background = { color: 'FFFFFF' };
+    s3.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 1, fill: { color: ORANGE }, line: { color: ORANGE } });
+    s3.addText('État des Projets', { x: 0.4, y: 0, w: 12, h: 1, fontSize: 22, bold: true, color: 'FFFFFF', valign: 'middle' });
+
+    const rows = [
+      [
+        { text: 'Projet', options: { bold: true, color: 'FFFFFF', fill: { color: ORANGE }, align: 'center' } },
+        { text: 'Statut', options: { bold: true, color: 'FFFFFF', fill: { color: ORANGE }, align: 'center' } },
+        { text: 'Avancement', options: { bold: true, color: 'FFFFFF', fill: { color: ORANGE }, align: 'center' } },
+        { text: 'Commentaire', options: { bold: true, color: 'FFFFFF', fill: { color: ORANGE }, align: 'center' } },
+      ],
+      ...projets.map(p => [
+        { text: p.nom || '', options: { color: DARK } },
+        { text: p.statut || '', options: { color: STATUS_COLOR_PPT[p.statut] || DARK, bold: true, align: 'center' } },
+        { text: `${p.avancement || 0}%`, options: { color: DARK, align: 'center' } },
+        { text: p.commentaire || '–', options: { color: '555555' } },
+      ])
+    ];
+
+    s3.addTable(rows, {
+      x: 0.4, y: 1.2, w: 12.5,
+      rowH: 0.45,
+      fontSize: 11,
+      border: { type: 'solid', pt: 1, color: 'E0E0E0' },
+      fill: { color: 'FFFFFF' },
+      autoPage: true,
+    });
+  }
+
+  // ── Slide 4 : Support & Incidents ───────────────────
+  if ((fiche.supports || []).length > 0) {
+    const s4 = pptx.addSlide();
+    s4.background = { color: 'FFFFFF' };
+    s4.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 1, fill: { color: ORANGE }, line: { color: ORANGE } });
+    s4.addText('Support & Incidents', { x: 0.4, y: 0, w: 12, h: 1, fontSize: 22, bold: true, color: 'FFFFFF', valign: 'middle' });
+
+    const rows = [
+      [
+        { text: 'Référence', options: { bold: true, color: 'FFFFFF', fill: { color: ORANGE } } },
+        { text: 'Type', options: { bold: true, color: 'FFFFFF', fill: { color: ORANGE } } },
+        { text: 'Statut', options: { bold: true, color: 'FFFFFF', fill: { color: ORANGE } } },
+        { text: 'Description', options: { bold: true, color: 'FFFFFF', fill: { color: ORANGE } } },
+      ],
+      ...(fiche.supports || []).map(s => [
+        { text: s.ref || '–', options: { color: DARK } },
+        { text: s.type || '', options: { color: DARK } },
+        { text: s.statut || '', options: { color: DARK } },
+        { text: s.description || '–', options: { color: '555555' } },
+      ])
+    ];
+    s4.addTable(rows, { x: 0.4, y: 1.2, w: 12.5, rowH: 0.45, fontSize: 11, border: { type: 'solid', pt: 1, color: 'E0E0E0' }, autoPage: true });
+  }
+
+  // ── Slide 5 : Blocages & Risques ────────────────────
+  if ((fiche.blocages || []).length > 0) {
+    const s5 = pptx.addSlide();
+    s5.background = { color: 'FFFFFF' };
+    s5.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 1, fill: { color: ORANGE }, line: { color: ORANGE } });
+    s5.addText('Blocages & Risques', { x: 0.4, y: 0, w: 12, h: 1, fontSize: 22, bold: true, color: 'FFFFFF', valign: 'middle' });
+
+    const impactColor = { Faible: '4CAF50', Moyen: 'FF9800', 'Élevé': 'F44336', Critique: 'B71C1C' };
+    let y = 1.2;
+    (fiche.blocages || []).forEach((b, i) => {
+      s5.addShape(pptx.ShapeType.roundRect, { x: 0.4, y, w: 12.5, h: 0.9, fill: { color: 'FFF3E0' }, line: { color: 'FF9800' }, rectRadius: 0.08 });
+      s5.addText(`⚠ ${b.description || ''}`, { x: 0.6, y: y + 0.04, w: 9, h: 0.4, fontSize: 11, bold: true, color: DARK });
+      s5.addText(`Action : ${b.action || '–'}`, { x: 0.6, y: y + 0.44, w: 9, h: 0.35, fontSize: 10, color: '555555' });
+      s5.addText(`Impact : ${b.impact || ''}`, { x: 9.8, y: y + 0.2, w: 2.8, h: 0.4, fontSize: 11, bold: true, color: impactColor[b.impact] || DARK, align: 'center' });
+      y += 1.05;
+      if (y > 6.5) return;
+    });
+  }
+
+  // ── Slide 6 : Livraisons & Actions ──────────────────
+  const hasLivr = (fiche.livraisons || []).length > 0;
+  const hasAct = (fiche.actions || []).length > 0;
+  if (hasLivr || hasAct) {
+    const s6 = pptx.addSlide();
+    s6.background = { color: 'FFFFFF' };
+    s6.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 13.33, h: 1, fill: { color: ORANGE }, line: { color: ORANGE } });
+    s6.addText('Livraisons & Actions', { x: 0.4, y: 0, w: 12, h: 1, fontSize: 22, bold: true, color: 'FFFFFF', valign: 'middle' });
+
+    if (hasLivr) {
+      s6.addText('Livrables de la semaine', { x: 0.4, y: 1.1, w: 12, h: 0.4, fontSize: 13, bold: true, color: ORANGE });
+      const livrRows = [
+        [{ text: 'Livrable', options: { bold: true, color: 'FFFFFF', fill: { color: ORANGE } } }, { text: 'Statut', options: { bold: true, color: 'FFFFFF', fill: { color: ORANGE } } }],
+        ...(fiche.livraisons || []).map(l => [{ text: l.nom || '' }, { text: l.statut || '', options: { align: 'center' } }])
+      ];
+      s6.addTable(livrRows, { x: 0.4, y: 1.5, w: 12.5, rowH: 0.4, fontSize: 11, border: { type: 'solid', pt: 1, color: 'E0E0E0' } });
+    }
+
+    if (hasAct) {
+      const actY = hasLivr ? 1.6 + (fiche.livraisons.length + 1) * 0.42 : 1.1;
+      s6.addText('Actions – Semaine prochaine', { x: 0.4, y: actY, w: 12, h: 0.4, fontSize: 13, bold: true, color: ORANGE });
+      const actRows = [
+        [
+          { text: 'Action', options: { bold: true, color: 'FFFFFF', fill: { color: ORANGE } } },
+          { text: 'Responsable', options: { bold: true, color: 'FFFFFF', fill: { color: ORANGE } } },
+          { text: 'Échéance', options: { bold: true, color: 'FFFFFF', fill: { color: ORANGE } } },
+        ],
+        ...(fiche.actions || []).map(a => [{ text: a.description || '' }, { text: a.responsable || '–' }, { text: a.echeance || '–', options: { align: 'center' } }])
+      ];
+      s6.addTable(actRows, { x: 0.4, y: actY + 0.42, w: 12.5, rowH: 0.4, fontSize: 11, border: { type: 'solid', pt: 1, color: 'E0E0E0' } });
+    }
+  }
+
+  const filename = `FicheMeteo_${(fiche.userName || 'TL').replace(/\s+/g, '_')}_${fiche.semaine}_${fiche.mois || ''}.pptx`;
+  pptx.writeFile({ fileName: filename });
+};
+
+// Modal PPT (manager choisit TL + fiche)
+window.openPptModal = async function() {
+  $('ppt-modal').classList.add('open');
+  const sel = $('ppt-tl-select');
+  sel.innerHTML = '<option value="">— Sélectionner un TL —</option>';
+  allUsers.forEach(u => { sel.innerHTML += `<option value="${u.id}">${u.name} (${u.domaine || u.email})</option>`; });
+  $('ppt-fiche-select').innerHTML = '<option value="">— Sélectionner d\'abord un TL —</option>';
+};
+
+window.closePptModal = function() { $('ppt-modal').classList.remove('open'); };
+
+$('ppt-tl-select') && ($('ppt-tl-select').onchange = async function() {
+  const uid = this.value;
+  const sel = $('ppt-fiche-select');
+  sel.innerHTML = '<option value="">Chargement…</option>';
+  if (!uid) { sel.innerHTML = '<option value="">— Sélectionner d\'abord un TL —</option>'; return; }
+  const q = query(collection(db, 'fiches'), where('userId', '==', uid), orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
+  const fiches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  sel.innerHTML = fiches.length
+    ? fiches.map(f => `<option value="${f.id}">${f.semaine} – ${f.moisLabel || f.mois}</option>`).join('')
+    : '<option value="">Aucune fiche</option>';
+});
+
+window.downloadModalPPT = async function() {
+  const ficheId = $('ppt-fiche-select').value;
+  if (!ficheId) { alert('Sélectionnez une fiche.'); return; }
+  const snap = await getDoc(doc(db, 'fiches', ficheId));
+  if (!snap.exists()) { alert('Fiche introuvable.'); return; }
+  generatePPT({ id: snap.id, ...snap.data() });
+  closePptModal();
+};
+
+// Bind after DOM ready
+setTimeout(() => {
+  const tlSel = $('ppt-tl-select');
+  if (tlSel) tlSel.onchange = async function() {
+    const uid = this.value;
+    const sel = $('ppt-fiche-select');
+    if (!uid) { sel.innerHTML = '<option value="">— Sélectionner d\'abord un TL —</option>'; return; }
+    sel.innerHTML = '<option value="">Chargement…</option>';
+    const q = query(collection(db, 'fiches'), where('userId', '==', uid), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    const fiches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    sel.innerHTML = fiches.length
+      ? fiches.map(f => `<option value="${f.id}">${f.semaine} – ${f.moisLabel || f.mois}</option>`).join('')
+      : '<option value="">Aucune fiche</option>';
+  };
+}, 500);
+
+// ── ROUTING ───────────────────────────────────────────────
 window.navigate = function(route, param) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const pages = {
@@ -402,7 +710,7 @@ window.showManagerTab = function(tab, el) {
   if (tab === 'charts') renderManagerCharts();
 };
 
-// ── AUTH ─────────────────────────────────────────────────
+// ── AUTH ──────────────────────────────────────────────────
 onAuthStateChanged(auth, async user => {
   if (user) {
     currentUser = user;
@@ -451,7 +759,7 @@ window.doResetPwd = async function() {
   } catch(e) { showAlert('login-alert', 'Erreur : ' + e.message); }
 };
 
-// ── HOME ─────────────────────────────────────────────────
+// ── HOME ──────────────────────────────────────────────────
 async function loadHome() {
   $('home-content').innerHTML = '<div class="loading">Chargement…</div>';
   const q = query(collection(db, 'fiches'), where('userId', '==', currentUser.uid), orderBy('createdAt', 'desc'));
@@ -616,11 +924,7 @@ function renderStep2() {
   </div><button class="add-item-btn" onclick="addProjet()">+ Ajouter un projet</button>`;
 }
 
-window.addProjet = function() {
-  if (!ficheFormData.projets) ficheFormData.projets = [];
-  ficheFormData.projets.push({ nom: '', statut: 'EN COURS', avancement: 0, commentaire: '' });
-  saveStepData(); renderStep();
-};
+window.addProjet = function() { if (!ficheFormData.projets) ficheFormData.projets = []; ficheFormData.projets.push({ nom: '', statut: 'EN COURS', avancement: 0, commentaire: '' }); saveStepData(); renderStep(); };
 window.removeProjet = function(i) { ficheFormData.projets.splice(i, 1); saveStepData(); renderStep(); };
 
 function renderStep3() {
@@ -640,11 +944,7 @@ function renderStep3() {
   </div><button class="add-item-btn" onclick="addSupport()">+ Ajouter un ticket / incident</button>`;
 }
 
-window.addSupport = function() {
-  if (!ficheFormData.supports) ficheFormData.supports = [];
-  ficheFormData.supports.push({ ref: '', type: 'Incident', statut: 'Ouvert', description: '' });
-  saveStepData(); renderStep();
-};
+window.addSupport = function() { if (!ficheFormData.supports) ficheFormData.supports = []; ficheFormData.supports.push({ ref: '', type: 'Incident', statut: 'Ouvert', description: '' }); saveStepData(); renderStep(); };
 window.removeSupport = function(i) { ficheFormData.supports.splice(i, 1); saveStepData(); renderStep(); };
 
 function renderStep4() {
@@ -661,11 +961,7 @@ function renderStep4() {
   </div><button class="add-item-btn" onclick="addBlocage()">+ Ajouter un blocage / risque</button>`;
 }
 
-window.addBlocage = function() {
-  if (!ficheFormData.blocages) ficheFormData.blocages = [];
-  ficheFormData.blocages.push({ description: '', action: '', impact: 'Moyen' });
-  saveStepData(); renderStep();
-};
+window.addBlocage = function() { if (!ficheFormData.blocages) ficheFormData.blocages = []; ficheFormData.blocages.push({ description: '', action: '', impact: 'Moyen' }); saveStepData(); renderStep(); };
 window.removeBlocage = function(i) { ficheFormData.blocages.splice(i, 1); saveStepData(); renderStep(); };
 
 function renderStep5() {
@@ -699,15 +995,9 @@ function renderStep5() {
     </div>`;
 }
 
-window.addLivraison = function() {
-  if (!ficheFormData.livraisons) ficheFormData.livraisons = [];
-  ficheFormData.livraisons.push({ nom: '', statut: 'En cours' }); saveStepData(); renderStep();
-};
+window.addLivraison = function() { if (!ficheFormData.livraisons) ficheFormData.livraisons = []; ficheFormData.livraisons.push({ nom: '', statut: 'En cours' }); saveStepData(); renderStep(); };
 window.removeLivraison = function(i) { ficheFormData.livraisons.splice(i, 1); saveStepData(); renderStep(); };
-window.addAction = function() {
-  if (!ficheFormData.actions) ficheFormData.actions = [];
-  ficheFormData.actions.push({ description: '', responsable: currentProfile?.name || '', echeance: '' }); saveStepData(); renderStep();
-};
+window.addAction = function() { if (!ficheFormData.actions) ficheFormData.actions = []; ficheFormData.actions.push({ description: '', responsable: currentProfile?.name || '', echeance: '' }); saveStepData(); renderStep(); };
 window.removeAction = function(i) { ficheFormData.actions.splice(i, 1); saveStepData(); renderStep(); };
 
 function saveStepData() {
@@ -764,15 +1054,7 @@ async function saveFiche() {
   const btn = $('step-container').querySelector('.btn-primary');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
   try {
-    const data = {
-      ...ficheFormData,
-      userId: currentUser.uid,
-      userName: currentProfile.name || currentProfile.email,
-      userEmail: currentProfile.email,
-      domaine: ficheFormData.domaine || currentProfile.domaine || '',
-      dateSubmit: new Date().toISOString(),
-      updatedAt: serverTimestamp(),
-    };
+    const data = { ...ficheFormData, userId: currentUser.uid, userName: currentProfile.name || currentProfile.email, userEmail: currentProfile.email, domaine: ficheFormData.domaine || currentProfile.domaine || '', dateSubmit: new Date().toISOString(), updatedAt: serverTimestamp() };
     if (ficheEditId) {
       await updateDoc(doc(db, 'fiches', ficheEditId), data);
       navigate('fiche-view', ficheEditId);
@@ -794,6 +1076,7 @@ async function loadFicheView(id) {
   const snap = await getDoc(doc(db, 'fiches', id));
   if (!snap.exists()) { $('fiche-view-content').innerHTML = '<p>Fiche introuvable.</p>'; return; }
   const f = { id: snap.id, ...snap.data() };
+  currentViewFiche = f;
 
   $('view-title').textContent = `${f.semaine} – ${f.moisLabel || moisLabel(f.mois)}`;
   $('view-month-link').textContent = f.moisLabel || moisLabel(f.mois);
@@ -802,6 +1085,7 @@ async function loadFicheView(id) {
   const canEdit = f.userId === currentUser.uid || currentProfile.role === 'manager';
   $('view-edit-btn').style.display = canEdit ? '' : 'none';
   $('view-edit-btn').onclick = () => navigate('fiche-edit', id);
+  $('view-ppt-btn').onclick = () => generatePPT(f);
 
   let html = `<div class="card" style="margin-bottom:16px">
     <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
@@ -879,12 +1163,15 @@ function renderManagerOverview() {
 
   $('manager-recent').innerHTML = `<div class="card"><h3 style="margin-bottom:16px">Dernières fiches</h3>
     ${allFiches.slice(0, 10).map(f => `
-      <div class="user-row" style="cursor:pointer" onclick="navigate('fiche-view','${f.id}')">
-        <div class="user-info">
+      <div class="user-row">
+        <div class="user-info" style="cursor:pointer" onclick="navigate('fiche-view','${f.id}')">
           <div class="user-name">${f.userName} – ${f.semaine} ${f.moisLabel || ''}</div>
           <div class="user-email">${f.domaine || ''}</div>
         </div>
-        <div class="meteo-badge ${meteoClass(f.meteo)}">${METEO_EMOJI[f.meteo]||''} ${f.meteo}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="meteo-badge ${meteoClass(f.meteo)}">${METEO_EMOJI[f.meteo]||''} ${f.meteo}</div>
+          <button class="btn btn-ppt btn-sm" onclick="generatePPT(${JSON.stringify(f).replace(/"/g,'&quot;')})">📥 PPT</button>
+        </div>
       </div>`).join('')}</div>`;
 }
 
@@ -956,9 +1243,15 @@ async function loadTLDetail(uid) {
     <div style="margin-bottom:24px">
       <h3 style="margin-bottom:12px;color:var(--orange)">${byMonth[mk][0].moisLabel || moisLabel(mk)}</h3>
       <div class="weeks-list">${byMonth[mk].map(f => `
-        <div class="card-week" onclick="navigate('fiche-view','${f.id}')">
-          <div><div style="font-weight:700">${f.semaine}</div><div style="font-size:.82rem;color:var(--muted)">${f.projets?.length||0} projet(s)</div></div>
-          <div class="meteo-badge ${meteoClass(f.meteo)}">${METEO_EMOJI[f.meteo]||''} ${f.meteo}</div>
+        <div class="card-week">
+          <div style="cursor:pointer;flex:1" onclick="navigate('fiche-view','${f.id}')">
+            <div style="font-weight:700">${f.semaine}</div>
+            <div style="font-size:.82rem;color:var(--muted)">${f.projets?.length||0} projet(s)</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="meteo-badge ${meteoClass(f.meteo)}">${METEO_EMOJI[f.meteo]||''} ${f.meteo}</div>
+            <button class="btn btn-ppt btn-sm" onclick='generatePPT(${JSON.stringify(f)})'>📥 PPT</button>
+          </div>
         </div>`).join('')}
       </div>
     </div>`).join('');
@@ -1004,7 +1297,7 @@ window.inviteUser = async function() {
       body: JSON.stringify({ requestType: 'PASSWORD_RESET', email })
     });
 
-    showAlert('invite-alert', `✅ Invitation envoyée à ${email} !`, 'success');
+    showAlert('invite-alert', `✅ Invitation envoyée à ${email} ! Il/Elle recevra un email pour définir son mot de passe.`, 'success');
     $('invite-name').value = ''; $('invite-email').value = ''; $('invite-domaine').value = '';
     loadAdmin();
   } catch(e) {
@@ -1017,7 +1310,7 @@ window.deleteUser = async function(uid, email) {
   await deleteDoc(doc(db, 'users', uid)); loadAdmin();
 };
 
-// ── EXPORT ────────────────────────────────────────────────
+// ── EXPORT JSON/CSV ───────────────────────────────────────
 window.exportJSON = function() {
   const blob = new Blob([JSON.stringify(allFiches.map(f => { const d={...f}; delete d.createdAt; delete d.updatedAt; return d; }), null, 2)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
