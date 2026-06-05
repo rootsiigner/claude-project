@@ -194,6 +194,7 @@
   <div id="nav-actions">
     <span id="nav-user"></span>
     <button class="btn-nav" id="nav-manager-btn" style="display:none" onclick="navigate('manager')">📊 Manager</button>
+    <button class="btn-nav" id="nav-stats-btn" style="display:none" onclick="navigate('mystats')">📊 Mes Stats</button>
     <button class="btn-nav" id="nav-admin-btn" style="display:none" onclick="navigate('admin')">👥 Admin</button>
     <button class="btn-nav" onclick="navigate('home')">🏠 Accueil</button>
     <button class="btn-nav" id="nav-nouvelle-btn" style="display:none;background:rgba(255,255,255,0.35)" onclick="navigate('fiche-new')">+ Nouvelle Fiche</button>
@@ -326,6 +327,19 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="page-mystats" class="page">
+  <div class="page-header"><h2>📊 Mon Tableau de Bord</h2></div>
+  <div id="mystats-stats" class="summary-stats"></div>
+  <div class="charts-grid">
+    <div class="chart-card"><h4>📈 Évolution de ma Météo</h4><canvas id="chart-my-meteo"></canvas></div>
+    <div class="chart-card"><h4>📦 Statut de mes Projets</h4><canvas id="chart-my-projets"></canvas></div>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <h4 style="margin-bottom:12px;font-weight:700">📋 Mes dernières fiches</h4>
+    <div id="mystats-recent"></div>
   </div>
 </div>
 
@@ -686,7 +700,7 @@ window.navigate = function(route, param) {
     login: 'page-login', home: 'page-home', month: 'page-month',
     'fiche-new': 'page-fiche-form', 'fiche-view': 'page-fiche-view',
     'fiche-edit': 'page-fiche-form', manager: 'page-manager',
-    admin: 'page-admin', 'tl-detail': 'page-tl-detail'
+    mystats: 'page-mystats', admin: 'page-admin', 'tl-detail': 'page-tl-detail'
   };
   const pageId = pages[route];
   if (!pageId) return;
@@ -698,12 +712,17 @@ window.navigate = function(route, param) {
   if (managerOnly.includes(route) && currentProfile?.role !== 'manager') {
     navigate('home'); return;
   }
+  const tlOnly = ['mystats'];
+  if (tlOnly.includes(route) && currentProfile?.role === 'manager') {
+    navigate('manager'); return;
+  }
   if (route === 'home') loadHome();
   else if (route === 'month') loadMonth(param);
   else if (route === 'fiche-new') startFicheForm(null);
   else if (route === 'fiche-view') loadFicheView(param);
   else if (route === 'fiche-edit') startFicheForm(param);
   else if (route === 'manager') loadManager();
+  else if (route === 'mystats') loadMyStats();
   else if (route === 'admin') loadAdmin();
   else if (route === 'tl-detail') loadTLDetail(param);
 };
@@ -734,6 +753,8 @@ onAuthStateChanged(auth, async user => {
     if (currentProfile.role === 'manager') {
       $('nav-manager-btn').style.display = 'inline-block';
       $('nav-admin-btn').style.display = 'inline-block';
+    } else {
+      $('nav-stats-btn').style.display = 'inline-block';
     }
     navigate('home');
   } else {
@@ -1195,6 +1216,89 @@ async function loadFicheView(id) {
   }
 
   $('fiche-view-content').innerHTML = html;
+}
+
+// ── MES STATS (TechLead) ──────────────────────────────────
+let chartMyMeteo = null;
+let chartMyProjets = null;
+
+async function loadMyStats() {
+  $('mystats-stats').innerHTML = '<div class="loading">Chargement…</div>';
+  const q = query(collection(db, 'fiches'), where('userId', '==', currentUser.uid), orderBy('createdAt', 'asc'));
+  const snap = await getDocs(q);
+  const fiches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  // Stats résumé
+  const scores = fiches.map(f => METEO_SCORE[f.meteo]).filter(Boolean);
+  const avg = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : '–';
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const thisMonthCount = fiches.filter(f => f.mois === thisMonth).length;
+  const totalProjets = fiches.reduce((s, f) => s + (f.projets?.length || 0), 0);
+  const totalBlocages = fiches.reduce((s, f) => s + (f.blocages?.length || 0), 0);
+
+  $('mystats-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-value">${fiches.length}</div><div class="stat-label">Total Fiches</div></div>
+    <div class="stat-card"><div class="stat-value">${thisMonthCount}</div><div class="stat-label">Ce mois-ci</div></div>
+    <div class="stat-card"><div class="stat-value">${avg}</div><div class="stat-label">Score météo moyen</div></div>
+    <div class="stat-card"><div class="stat-value">${totalProjets}</div><div class="stat-label">Total Projets</div></div>
+    <div class="stat-card"><div class="stat-value">${totalBlocages}</div><div class="stat-label">Total Blocages</div></div>`;
+
+  // Graphique météo
+  const weeks = fiches.map(f => f.semaine);
+  if (chartMyMeteo) chartMyMeteo.destroy();
+  chartMyMeteo = new Chart($('chart-my-meteo'), {
+    type: 'line',
+    data: {
+      labels: weeks,
+      datasets: [{
+        label: 'Météo',
+        data: fiches.map(f => METEO_SCORE[f.meteo] || null),
+        borderColor: '#FF6B00',
+        backgroundColor: '#FF6B0033',
+        tension: 0.3,
+        pointBackgroundColor: fiches.map(f => ({ Excellent: '#4caf50', Correct: '#2196f3', Difficile: '#ff9800', Critique: '#f44336' }[f.meteo] || '#FF6B00')),
+        pointRadius: 6,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { min: 1, max: 4, ticks: { callback: v => ['','Critique','Difficile','Correct','Excellent'][v] } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // Graphique projets
+  if (chartMyProjets) chartMyProjets.destroy();
+  chartMyProjets = new Chart($('chart-my-projets'), {
+    type: 'bar',
+    data: {
+      labels: weeks,
+      datasets: [
+        { label: 'EN COURS', backgroundColor: '#2196f3', data: fiches.map(f => (f.projets||[]).filter(p => p.statut === 'EN COURS').length) },
+        { label: 'SOLDÉ', backgroundColor: '#4caf50', data: fiches.map(f => (f.projets||[]).filter(p => p.statut === 'SOLDÉ').length) },
+        { label: 'BLOQUÉ', backgroundColor: '#f44336', data: fiches.map(f => (f.projets||[]).filter(p => p.statut === 'BLOQUÉ').length) },
+      ]
+    },
+    options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // Dernières fiches
+  const recentes = [...fiches].reverse().slice(0, 5);
+  $('mystats-recent').innerHTML = recentes.length
+    ? `<div class="weeks-list">${recentes.map(f => `
+        <div class="card-week">
+          <div style="flex:1;cursor:pointer" onclick="navigate('fiche-view','${f.id}')">
+            <div style="font-weight:700">${f.semaine} – ${f.moisLabel || moisLabel(f.mois)}</div>
+            <div style="font-size:.82rem;color:var(--muted)">${f.projets?.length || 0} projet(s)</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="meteo-badge ${meteoClass(f.meteo)}">${METEO_EMOJI[f.meteo]||''} ${f.meteo}</div>
+            <button class="btn btn-secondary btn-sm" onclick="navigate('fiche-edit','${f.id}')">✏️</button>
+            <button class="btn btn-ppt btn-sm" onclick="generatePPT(${JSON.stringify(f).replace(/</g,'\\u003c')})">📥</button>
+          </div>
+        </div>`).join('')}</div>`
+    : '<p style="color:var(--muted)">Aucune fiche.</p>';
 }
 
 // ── MANAGER ───────────────────────────────────────────────
