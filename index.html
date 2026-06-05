@@ -692,6 +692,11 @@ window.navigate = function(route, param) {
   $(pageId).classList.add('active');
   if (route === 'login') { $('nav').style.display = 'none'; return; }
   $('nav').style.display = 'flex';
+  // Bloquer les routes réservées au manager pour les TechLeads
+  const managerOnly = ['manager', 'admin', 'tl-detail'];
+  if (managerOnly.includes(route) && currentProfile?.role !== 'manager') {
+    navigate('home'); return;
+  }
   if (route === 'home') loadHome();
   else if (route === 'month') loadMonth(param);
   else if (route === 'fiche-new') startFicheForm(null);
@@ -840,7 +845,13 @@ function startFicheForm(editId) {
 
 async function loadFicheForEdit(id) {
   const snap = await getDoc(doc(db, 'fiches', id));
-  if (snap.exists()) { ficheFormData = { ...snap.data() }; renderStep(); }
+  if (!snap.exists()) { navigate('home'); return; }
+  const data = snap.data();
+  // Un TL ne peut modifier que ses propres fiches
+  if (currentProfile.role !== 'manager' && data.userId !== currentUser.uid) {
+    navigate('home'); return;
+  }
+  ficheFormData = { ...data }; renderStep();
 }
 
 function renderStep() {
