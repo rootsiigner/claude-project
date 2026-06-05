@@ -196,6 +196,7 @@
     <button class="btn-nav" id="nav-manager-btn" style="display:none" onclick="navigate('manager')">📊 Manager</button>
     <button class="btn-nav" id="nav-admin-btn" style="display:none" onclick="navigate('admin')">👥 Admin</button>
     <button class="btn-nav" onclick="navigate('home')">🏠 Accueil</button>
+    <button class="btn-nav" id="nav-nouvelle-btn" style="display:none;background:rgba(255,255,255,0.35)" onclick="navigate('fiche-new')">+ Nouvelle Fiche</button>
     <button class="btn-nav" onclick="doSignOut()">Déconnexion</button>
   </div>
 </nav>
@@ -729,6 +730,7 @@ onAuthStateChanged(auth, async user => {
       await setDoc(doc(db, 'users', user.uid), { ...currentProfile, createdAt: serverTimestamp() });
     }
     $('nav-user').textContent = currentProfile.name || currentProfile.email;
+    $('nav-nouvelle-btn').style.display = 'inline-block';
     if (currentProfile.role === 'manager') {
       $('nav-manager-btn').style.display = 'inline-block';
       $('nav-admin-btn').style.display = 'inline-block';
@@ -778,45 +780,68 @@ async function loadHome() {
     return;
   }
 
-  // Section fiches récentes (5 dernières)
-  const recentes = fiches.slice(0, 5);
-  let html = `
-    <div class="card" style="margin-bottom:24px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <h3 style="font-size:1rem;font-weight:700">🕐 Fiches récentes</h3>
-      </div>
-      <div class="weeks-list">
-        ${recentes.map(f => `
-          <div class="card-week">
-            <div style="flex:1;cursor:pointer" onclick="navigate('fiche-view','${f.id}')">
-              <div style="font-weight:700">${f.semaine} – ${f.moisLabel || moisLabel(f.mois)}</div>
-              <div style="font-size:.82rem;color:var(--muted);margin-top:2px">${f.projets?.length || 0} projet(s) · ${f.dateSubmit ? new Date(f.dateSubmit).toLocaleDateString('fr-FR') : ''}</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <div class="meteo-badge ${meteoClass(f.meteo)}">${METEO_EMOJI[f.meteo] || ''} ${f.meteo}</div>
-              <button class="btn btn-secondary btn-sm no-print" onclick="navigate('fiche-edit','${f.id}')">✏️</button>
-              <button class="btn btn-ppt btn-sm no-print" onclick="generatePPT(${JSON.stringify(f).replace(/</g,'\\u003c')})">📥</button>
-            </div>
-          </div>`).join('')}
-      </div>
-    </div>
-    <div style="font-weight:700;font-size:1rem;margin-bottom:12px">📅 Historique par mois</div>`;
-
   const byMonth = {};
   fiches.forEach(f => { if (!byMonth[f.mois]) byMonth[f.mois] = []; byMonth[f.mois].push(f); });
   const monthsSorted = Object.keys(byMonth).sort((a, b) => b.localeCompare(a));
 
-  html += `<div class="card-grid">${monthsSorted.map(mk => {
-    const list = byMonth[mk];
-    return `<div class="card-month" onclick="navigate('month','${mk}')">
-      <div class="month-icon">📅</div>
-      <div class="month-label">${list[0].moisLabel || moisLabel(mk)}</div>
-      <div class="month-count">${list.length} fiche${list.length > 1 ? 's' : ''}</div>
+  function ficheRow(f) {
+    return `<div class="card-week">
+      <div style="flex:1;cursor:pointer" onclick="navigate('fiche-view','${f.id}')">
+        <div style="font-weight:700">${f.semaine} – ${f.moisLabel || moisLabel(f.mois)}</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-top:2px">${f.projets?.length || 0} projet(s) · ${f.dateSubmit ? new Date(f.dateSubmit).toLocaleDateString('fr-FR') : ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="meteo-badge ${meteoClass(f.meteo)}">${METEO_EMOJI[f.meteo] || ''} ${f.meteo}</div>
+        <button class="btn btn-secondary btn-sm" title="Modifier" onclick="navigate('fiche-edit','${f.id}')">✏️</button>
+        <button class="btn btn-ppt btn-sm" title="Télécharger PPT" onclick="generatePPT(${JSON.stringify(f).replace(/</g,'\\u003c')})">📥</button>
+      </div>
     </div>`;
-  }).join('')}</div>`;
+  }
+
+  const html = `
+    <div class="tabs" style="margin-bottom:16px">
+      <div class="tab active" id="htab-recent" onclick="switchHomeTab('recent')">🕐 Récentes</div>
+      <div class="tab" id="htab-mois" onclick="switchHomeTab('mois')">📅 Par mois</div>
+      <div class="tab" id="htab-all" onclick="switchHomeTab('all')">📋 Toutes (${fiches.length})</div>
+    </div>
+
+    <!-- Récentes -->
+    <div id="htab-recent-content" class="tab-content active">
+      <div class="weeks-list">${fiches.slice(0, 8).map(ficheRow).join('')}</div>
+      ${fiches.length > 8 ? `<p style="text-align:center;margin-top:12px;font-size:.85rem;color:var(--muted)">
+        <a style="color:var(--orange);cursor:pointer" onclick="switchHomeTab('all')">Voir toutes les ${fiches.length} fiches →</a></p>` : ''}
+    </div>
+
+    <!-- Par mois -->
+    <div id="htab-mois-content" class="tab-content">
+      <div class="card-grid">${monthsSorted.map(mk => {
+        const list = byMonth[mk];
+        return `<div class="card-month" onclick="navigate('month','${mk}')">
+          <div class="month-icon">📅</div>
+          <div class="month-label">${list[0].moisLabel || moisLabel(mk)}</div>
+          <div class="month-count">${list.length} fiche${list.length > 1 ? 's' : ''}</div>
+        </div>`;
+      }).join('')}</div>
+    </div>
+
+    <!-- Toutes -->
+    <div id="htab-all-content" class="tab-content">
+      ${monthsSorted.map(mk => `
+        <div style="margin-bottom:20px">
+          <div style="font-weight:700;color:var(--orange);margin-bottom:8px;font-size:.95rem">${byMonth[mk][0].moisLabel || moisLabel(mk)}</div>
+          <div class="weeks-list">${byMonth[mk].map(ficheRow).join('')}</div>
+        </div>`).join('')}
+    </div>`;
 
   $('home-content').innerHTML = html;
 }
+
+window.switchHomeTab = function(tab) {
+  ['recent','mois','all'].forEach(t => {
+    document.getElementById(`htab-${t}`)?.classList.toggle('active', t === tab);
+    document.getElementById(`htab-${t}-content`)?.classList.toggle('active', t === tab);
+  });
+};
 
 // ── MONTH ─────────────────────────────────────────────────
 async function loadMonth(moisKey) {
